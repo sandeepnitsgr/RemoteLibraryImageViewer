@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>com.baghira.RemoteLibraryImageViewer</id>
+    <name>RemoteLibraryImageViewer</name>
+    <vendor email="sandeepnitsgr08@gmail.com" url="">com.baghira</vendor>
+
+    <description>
+        All images shifted to ecs server that are to be used by Remoteresourcerequest library will be shown in local so that redundandy of the image on server is also prevented.
+    </description>
+
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <toolWindow
+                id="Remote Image Viewer" anchor="right" factoryClass="com.baghira.ui.ImageViewerToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+
+    </actions>
+</idea-plugin>
