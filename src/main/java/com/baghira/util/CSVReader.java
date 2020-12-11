@@ -16,6 +16,7 @@ public class CSVReader {
     public static final String XXHDPI = "xxhdpi";
     public static final String CSV_SEPARATOR = ",";
     public static final String CUSTOMERAPP = "customerapp";
+    public static final String CUSTOMERAPP_PRO = "customerapp_pro";
     public static final String SELLERAPP = "sellerapp";
     private final Set<Pair<String, String>> fileNameSet;
     private final String csvPath;
@@ -27,16 +28,21 @@ public class CSVReader {
 
     public void initReader() {
         initPathAndUpdateResultForCustomerapp();
+        initPathAndUpdateResultForCustomerappPro();
         initPathAndUpdateResultForSellerapp();
-        initAllRemoteFiesAndUpdateResult();
+        //initAllRemoteFiesAndUpdateResult();
     }
 
-    private void initAllRemoteFiesAndUpdateResult() {
-        String[] remoteFiles = AllRemoteFilesAndType.ALL_FILES.split("\n");
-        for (String remoteFileDetails : remoteFiles) {
-            fetchImageDetailsAndUpdateSet(remoteFileDetails);
-        }
+    private void initPathAndUpdateResultForCustomerappPro() {
+        updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP_PRO));
     }
+
+//    private void initAllRemoteFiesAndUpdateResult() {
+//        String[] remoteFiles = AllRemoteFilesAndType.ALL_FILES.split("\n");
+//        for (String remoteFileDetails : remoteFiles) {
+//            fetchImageDetailsAndUpdateSet(remoteFileDetails);
+//        }
+//    }
 
     private void initPathAndUpdateResultForCustomerapp() {
         updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP));

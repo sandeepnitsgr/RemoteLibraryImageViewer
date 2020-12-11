@@ -2,28 +2,34 @@ package com.baghira.ui;
 
 import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
-import com.baghira.search.filesystem.EntriesFinder;
+import com.baghira.parser.ImageNameParser;
 import com.baghira.util.CSVReader;
 import com.baghira.util.UrlAndPathHelper;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class RemoteImageDownloaderView extends JDialog implements DownloadListener {
     JPanel panel;
     private JList imageList;
     private JScrollPane scrollPane;
+    private JTabbedPane tabbedPane1;
+    private JLabel syncNow;
     private JLabel disclaimer;
     private final Project project;
     private List<Pair<String, String>> fileNameAndTypeList;
+    HashSet<Pair<String, String>> allImagesName;
     private UrlAndPathHelper urlAndPathHelper;
     private List<ImageIcon> imageIconList;
     private String[] imageNames;
@@ -34,15 +40,16 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         setImageListAttributes();
         initUrlAndPathHelper();
         initEntriesFinder();
-        initCsvReaderAndGetDistinctFileName();
+        initCsvReaderAndUpdateDistinctFileName();
         initImageIconAndName();
         createDownloadUrl();
         startImageDownloader();
     }
 
     private void initEntriesFinder() {
-        EntriesFinder entriesFinder = new EntriesFinder(project.getBasePath());
-        entriesFinder.getAllRelevantEntries();
+        ImageNameParser entriesFinder = new ImageNameParser();
+        entriesFinder.initEntriesSearch(project.getBasePath());
+        allImagesName = entriesFinder.getAllImagesName();
     }
 
     private void setUIComponentAttributes() {
@@ -83,15 +90,35 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void setImageListAttributes() {
+        syncNow.setIcon(AllIcons.Javaee.UpdateRunningApplication);
         imageList.setBorder(JBUI.Borders.empty(5));
         imageList.setFixedCellWidth(190);
         imageList.setFixedCellHeight(170);
     }
 
-    private void initCsvReaderAndGetDistinctFileName() {
+    private void initCsvReaderAndUpdateDistinctFileName() {
         CSVReader reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader();
-        fileNameAndTypeList = reader.getDistinctFilesName();
+        List<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
+        updateDistinctFileName(distinctFilesName);
+    }
+
+    private void updateDistinctFileName(List<Pair<String, String>> distinctFilesName) {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(EntriesFinder.searchEntry(project.getBasePath(), "\\.loadRemoteImageDrawable")).append("\n****\n");
+//        sb.append(EntriesFinder.searchEntry(project.getBasePath(), "app:remoteFileName=")).append("\n****\n");
+//        int count = 1;
+////        AllIcons.Javaee.UpdateRunningApplication
+//        for (Pair<String, String> e : allImagesName) {
+//            sb.append(count).append(". ").append(e.first).append(" : ").append(e.second).append("\n");
+//            count++;
+//        }
+//        for (Pair<String, String> ab : allImagesName)
+//            System.out.println(ab);
+//        System.out.println(distinctFilesName);
+//        output.setText(sb.toString());
+        allImagesName.addAll(distinctFilesName);
+        fileNameAndTypeList = new ArrayList<>(allImagesName);
     }
 
     private void startImageDownloader() {

@@ -1,38 +1,33 @@
 package com.baghira.search.filesystem;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class EntriesFinder {
 
     private static final String BASE_COMMAND = "git grep ";
-    public static final String METHOD_LOAD_REMOTE_IMAGE_DRAWABLE = ".loadRemoteImageDrawable(";
-    public static final String TAG_DEFERRED_IMAGE_VIEW = "<com.tkpd.remoteresourcerequest.view.DeferredImageView";
-    private String basePath;
-    private HashMap<String, String> result;
+    public static final String ERROR = "ERROR";
+    public static final String OUTPUT = "OUTPUT";
+    public static final String FINAL_OUTPUT = "Final output: ";
 
-    public EntriesFinder(String basePath) {
-        this.basePath = basePath;
-    }
-
-    private String searchEntry(String directory, String aCommand) {
+    public static String searchEntry(String directory, String aCommand) {
         String output = "";
         try {
             Runtime rt = Runtime.getRuntime();
             String executableCommand = BASE_COMMAND + aCommand;
+//            System.out.println("command = "+executableCommand);
             Process proc = rt.exec(executableCommand, null, new File(directory));
             StreamGobbler errorGobbler = new
-                    StreamGobbler(proc.getErrorStream(), "ERROR");
+                    StreamGobbler(proc.getErrorStream(), ERROR);
 
             StreamGobbler outputGobbler = new
-                    StreamGobbler(proc.getInputStream(), "OUTPUT");
+                    StreamGobbler(proc.getInputStream(), OUTPUT);
 
             errorGobbler.start();
             outputGobbler.start();
-
+            outputGobbler.join();
+            errorGobbler.join();
             output = outputGobbler.getOutput();
-            System.out.println("Final output: " + output);
+//            System.out.println(FINAL_OUTPUT + output);
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -40,25 +35,4 @@ public class EntriesFinder {
         return output;
     }
 
-    public Object getAllRelevantEntries() {
-
-        String methodSearchResult = searchEntry(basePath, METHOD_LOAD_REMOTE_IMAGE_DRAWABLE);
-        String tagSearchResult = searchEntry(basePath, TAG_DEFERRED_IMAGE_VIEW);
-        processAndAddToResult(methodSearchResult, tagSearchResult);
-        return result;
-    }
-
-    private void processAndAddToResult(String... resultArgs) {
-        for(String result : resultArgs) {
-            addToResult(getProcessedResult(result));
-        }
-    }
-
-    private void addToResult(Object processedResult) {
-
-    }
-
-    private String getProcessedResult(String result) {
-        return result;
-    }
 }
