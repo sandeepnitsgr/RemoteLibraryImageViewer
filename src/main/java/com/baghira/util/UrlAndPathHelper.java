@@ -23,12 +23,14 @@ public class UrlAndPathHelper {
             File.separator +
             "resources_description.csv";
     private final Project project;
-    private List<String> localFilePathList;
+    private final List<String> localFilePathList;
+    private final List<String> failedUrlList;
 
     public UrlAndPathHelper(Project project) {
         this.project = project;
         remoteUrlList = new ArrayList<>();
         localFilePathList = new ArrayList<>();
+        failedUrlList = new ArrayList<>();
     }
 
     public String getRelativeCsvFilePath() {
@@ -67,7 +69,15 @@ public class UrlAndPathHelper {
         return localFilePathList;
     }
 
+    public List<String> getFailedUrlList() {
+        return failedUrlList;
+    }
+
     public void addToLocalFileLocationList(String localFileLocation) {
         localFilePathList.add(localFileLocation);
+    }
+
+    public void addToFailedUrlList(String urlStr) {
+        failedUrlList.add(urlStr);
     }
 }

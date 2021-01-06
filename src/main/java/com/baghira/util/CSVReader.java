@@ -16,6 +16,7 @@ public class CSVReader {
     public static final String XXHDPI = "xxhdpi";
     public static final String CSV_SEPARATOR = ",";
     public static final String CUSTOMERAPP = "customerapp";
+    public static final String CUSTOMERAPP_MID_APP = "customerapp_mid_app";
     public static final String CUSTOMERAPP_PRO = "customerapp_pro";
     public static final String SELLERAPP = "sellerapp";
     private final Set<Pair<String, String>> fileNameSet;
@@ -29,8 +30,13 @@ public class CSVReader {
     public void initReader() {
         initPathAndUpdateResultForCustomerapp();
         initPathAndUpdateResultForCustomerappPro();
+        initPathAndUpdateResultForCustomerappMidApp();
         initPathAndUpdateResultForSellerapp();
         //initAllRemoteFiesAndUpdateResult();
+    }
+
+    private void initPathAndUpdateResultForCustomerappMidApp() {
+        updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP_MID_APP));
     }
 
     private void initPathAndUpdateResultForCustomerappPro() {

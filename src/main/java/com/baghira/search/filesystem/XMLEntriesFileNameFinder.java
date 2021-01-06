@@ -41,9 +41,8 @@ public class XMLEntriesFileNameFinder implements FileNameFinder {
     private void findFileNameForDensityType() {
         if (typeResult == null || typeResult.isEmpty() || !typeResult.contains(": ")) return;
         String[] type = typeResult.split(": ");
-        String[] dpiTypes = type[1].split("=");
-        String fileName = dpiTypes[0].substring(dpiTypes[0].lastIndexOf(File.separator) + 1);
-        String dpiType = dpiTypes[1].contains("single") ? "singleDpi" : "xxhdpi";
+        String fileName = type[0].substring(type[0].lastIndexOf(File.separator) + 1);
+        String dpiType = type[1].contains("single") ? "singleDpi" : "xxhdpi";
         dpiTypeAndFileName.put(fileName, dpiType);
     }
 }

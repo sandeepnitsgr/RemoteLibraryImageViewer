@@ -11,39 +11,63 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 public class RemoteImageDownloaderView extends JDialog implements DownloadListener {
     JPanel panel;
-    private JList imageList;
-    private JScrollPane scrollPane;
-    private JTabbedPane tabbedPane1;
     private JLabel syncNow;
     private JLabel disclaimer;
+    private JTabbedPane tabbedPane;
+    private JPanel allTab;
+    private JPanel preFetchTab;
+    private JPanel nonPreFetchTab;
+    private JList<String> imageList;
+    private JList<String> preFetchImageList;
+    private JList<String> nonPreFetchImageList;
     private final Project project;
-    private List<Pair<String, String>> fileNameAndTypeList;
+    CSVReader reader;
+
+    private List<Pair<String, String>> allFileNameAndTypeList;
+    private List<Pair<String, String>> preFetchedFileNameAndTypeList;
+    private List<Pair<String, String>> nonPreFetchedFileNameAndTypeList;
     HashSet<Pair<String, String>> allImagesName;
+    HashSet<Pair<String, String>> preFetchedImagesName;
     private UrlAndPathHelper urlAndPathHelper;
     private List<ImageIcon> imageIconList;
     private String[] imageNames;
+    private final Color greyBgColor = new Color(109, 107, 107, 223);
+    private final Color originalBgColor = new Color(43, 43, 43);
 
     public RemoteImageDownloaderView(Project project) {
         this.project = project;
         setUIComponentAttributes();
-        setImageListAttributes();
+        init();
+    }
+
+    private void init() {
         initUrlAndPathHelper();
         initEntriesFinder();
         initCsvReaderAndUpdateDistinctFileName();
-        initImageIconAndName();
-        createDownloadUrl();
+        initTabs();
         startImageDownloader();
+        createDownloadUrl();
+    }
+
+    private void initTabs() {
+//        tabbedPane.addTab("ALL", new );
+//        tabbedPane.addTab("Pre-Fetched", new PreFetchedTab());
+//        tabbedPane.addTab("Non Pre-Fetched", new NonPreFetchedTab());
+        initAllTabImageIconAndName();
+        initPreFetchTabImageIconAndName();
+        initNonPreFetchTabImageIconAndName();
     }
 
     private void initEntriesFinder() {
@@ -55,6 +79,48 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private void setUIComponentAttributes() {
         setImageListAttributes();
         setDisclaimerAttributes();
+        setActionListener();
+    }
+
+    private void setActionListener() {
+        syncNow.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                syncNow.setOpaque(true);
+                syncNow.setForeground(greyBgColor);
+                System.out.println("clicked");
+                imageList.setVisible(false);
+                SwingUtilities.invokeLater(() -> {
+                    init();
+                    imageList.setVisible(true);
+                });
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                syncNow.setOpaque(true);
+                syncNow.setBackground(greyBgColor);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                syncNow.setOpaque(false);
+                syncNow.setBackground(originalBgColor);
+            }
+        });
+        tabbedPane.addChangeListener(changeEvent -> {
+            switch (tabbedPane.getSelectedIndex()) {
+                case 0:
+                    init();
+                    break;
+                case 1:
+                    List<Pair<String, String>> csvEntriesName = reader.getDistinctFilesName();
+
+                    break;
+                case 2:
+                    break;
+            }
+        });
     }
 
     private void setDisclaimerAttributes() {
@@ -66,15 +132,22 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         disclaimer.setBorder(new CompoundBorder(border, margin));
     }
 
-    private void initImageIconAndName() {
+    private void initAllTabImageIconAndName() {
         imageIconList = new ArrayList<>();
-        imageNames = new String[fileNameAndTypeList.size()];
+        imageNames = new String[allFileNameAndTypeList.size()];
+    }
+
+
+    private void initNonPreFetchTabImageIconAndName() {
 
     }
 
+    private void initPreFetchTabImageIconAndName() {
+
+    }
     private void createDownloadUrl() {
         int pos = 0;
-        for (Pair<String, String> fileNameAndType : fileNameAndTypeList) {
+        for (Pair<String, String> fileNameAndType : allFileNameAndTypeList) {
             urlAndPathHelper.addToRemoteUrlList(fileNameAndType.second, fileNameAndType.first);
             addToImageNamesArray(pos, fileNameAndType.first);
             pos++;
@@ -91,34 +164,34 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
 
     private void setImageListAttributes() {
         syncNow.setIcon(AllIcons.Javaee.UpdateRunningApplication);
-        imageList.setBorder(JBUI.Borders.empty(5));
+        imageList.setBorder(JBUI.Borders.empty(20));
         imageList.setFixedCellWidth(190);
         imageList.setFixedCellHeight(170);
     }
 
     private void initCsvReaderAndUpdateDistinctFileName() {
-        CSVReader reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
+        reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader();
         List<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
-        updateDistinctFileName(distinctFilesName);
+        updateDistinctFileNameForAllTab(distinctFilesName);
+        updateDistinctFileNameForPreFetchedTab(distinctFilesName);
+        updateDistinctFileNameForNonPreFetchedTab();
     }
 
-    private void updateDistinctFileName(List<Pair<String, String>> distinctFilesName) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(EntriesFinder.searchEntry(project.getBasePath(), "\\.loadRemoteImageDrawable")).append("\n****\n");
-//        sb.append(EntriesFinder.searchEntry(project.getBasePath(), "app:remoteFileName=")).append("\n****\n");
-//        int count = 1;
-////        AllIcons.Javaee.UpdateRunningApplication
-//        for (Pair<String, String> e : allImagesName) {
-//            sb.append(count).append(". ").append(e.first).append(" : ").append(e.second).append("\n");
-//            count++;
-//        }
-//        for (Pair<String, String> ab : allImagesName)
-//            System.out.println(ab);
-//        System.out.println(distinctFilesName);
-//        output.setText(sb.toString());
+    private void updateDistinctFileNameForAllTab(List<Pair<String, String>> distinctFilesName) {
         allImagesName.addAll(distinctFilesName);
-        fileNameAndTypeList = new ArrayList<>(allImagesName);
+        allFileNameAndTypeList = new ArrayList<>(allImagesName);
+    }
+
+    private void updateDistinctFileNameForPreFetchedTab(List<Pair<String, String>> distinctFilesName) {
+        preFetchedImagesName = new HashSet<>(distinctFilesName);
+        preFetchedFileNameAndTypeList = new ArrayList<>(preFetchedImagesName);
+    }
+
+    private void updateDistinctFileNameForNonPreFetchedTab() {
+        HashSet<Pair<String, String>> nonPreFetchedName = new HashSet<>(allImagesName);
+        nonPreFetchedName.removeAll(preFetchedImagesName);
+        nonPreFetchedFileNameAndTypeList = new ArrayList<>(nonPreFetchedName);
     }
 
     private void startImageDownloader() {
@@ -128,7 +201,6 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
 
     private void updateImageIconList() {
         List<String> localFileLocationList = urlAndPathHelper.getLocalFilePathList();
-
         for (String path : localFileLocationList) {
             imageIconList.add(getImageIcon(path));
         }
