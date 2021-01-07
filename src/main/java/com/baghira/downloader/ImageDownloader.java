@@ -62,11 +62,12 @@ public class ImageDownloader {
                 }
                 fis.close();
                 bis.close();
-                addLocalFileLocationToList(file);
             } catch (Exception e) {
                 addFailedUrlToFailedList(urlStr);
+                return;
             }
         }
+        addLocalFileLocationToList(file);
     }
 
     private void addFailedUrlToFailedList(String urlStr) {

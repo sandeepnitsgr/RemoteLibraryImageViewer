@@ -3,7 +3,10 @@ package com.baghira.ui;
 import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
 import com.baghira.parser.ImageNameParser;
+import com.baghira.ui.tabs.CriteriaTabFactory;
+import com.baghira.ui.tabs.JButtonListDemo;
 import com.baghira.util.CSVReader;
+import com.baghira.util.CriteriaTabType;
 import com.baghira.util.UrlAndPathHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
@@ -20,6 +23,8 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
+import static com.baghira.ui.tabs.Main.createAndShowGUI;
 
 public class RemoteImageDownloaderView extends JDialog implements DownloadListener {
     JPanel panel;
@@ -53,21 +58,24 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void init() {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
         initUrlAndPathHelper();
         initEntriesFinder();
         initCsvReaderAndUpdateDistinctFileName();
-        initTabs();
-        startImageDownloader();
+        initAllTabImageIconAndName();
         createDownloadUrl();
+        startImageDownloader();
     }
 
     private void initTabs() {
-//        tabbedPane.addTab("ALL", new );
-//        tabbedPane.addTab("Pre-Fetched", new PreFetchedTab());
-//        tabbedPane.addTab("Non Pre-Fetched", new NonPreFetchedTab());
-        initAllTabImageIconAndName();
-        initPreFetchTabImageIconAndName();
-        initNonPreFetchTabImageIconAndName();
+        tabbedPane.removeAll();
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(allFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(allFileNameAndTypeList), CriteriaTabType.ALL));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(preFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(preFetchedFileNameAndTypeList), CriteriaTabType.PRE_FETCHED));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(nonPreFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(nonPreFetchedFileNameAndTypeList), CriteriaTabType.NON_PRE_FETCHED));
     }
 
     private void initEntriesFinder() {
@@ -108,19 +116,6 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
                 syncNow.setBackground(originalBgColor);
             }
         });
-        tabbedPane.addChangeListener(changeEvent -> {
-            switch (tabbedPane.getSelectedIndex()) {
-                case 0:
-                    init();
-                    break;
-                case 1:
-                    List<Pair<String, String>> csvEntriesName = reader.getDistinctFilesName();
-
-                    break;
-                case 2:
-                    break;
-            }
-        });
     }
 
     private void setDisclaimerAttributes() {
@@ -137,14 +132,6 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         imageNames = new String[allFileNameAndTypeList.size()];
     }
 
-
-    private void initNonPreFetchTabImageIconAndName() {
-
-    }
-
-    private void initPreFetchTabImageIconAndName() {
-
-    }
     private void createDownloadUrl() {
         int pos = 0;
         for (Pair<String, String> fileNameAndType : allFileNameAndTypeList) {
@@ -200,7 +187,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void updateImageIconList() {
-        List<String> localFileLocationList = urlAndPathHelper.getLocalFilePathList();
+        List<String> localFileLocationList = urlAndPathHelper.getLocalFilePathList(allFileNameAndTypeList);
         for (String path : localFileLocationList) {
             imageIconList.add(getImageIcon(path));
         }
@@ -216,8 +203,9 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
 
     @Override
     public void setIconsDetailInView() {
-        updateImageIconList();
-        imageList.setListData(imageNames);
-        imageList.setCellRenderer(new DownloadedImageCellRenderer(imageIconList));
+        initTabs();
+//        updateImageIconList();
+//        imageList.setListData(imageNames);
+//        imageList.setCellRenderer(new DownloadedImageCellRenderer(imageIconList));
     }
 }

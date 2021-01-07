@@ -1,6 +1,7 @@
 package com.baghira.util;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -65,8 +66,12 @@ public class UrlAndPathHelper {
         return remoteUrlList;
     }
 
-    public List<String> getLocalFilePathList() {
-        return localFilePathList;
+    public List<String> getLocalFilePathList(List<Pair<String, String>> fileNameAndTypeList) {
+        List<String> list = new ArrayList<>();
+        for(Pair<String, String> fileNameTypePair : fileNameAndTypeList) {
+            list.add(getLocalFileBasePath()+ File.separator + fileNameTypePair.first);
+        }
+        return list;
     }
 
     public List<String> getFailedUrlList() {
