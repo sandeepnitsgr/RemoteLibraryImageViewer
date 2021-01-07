@@ -4,7 +4,6 @@ import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
 import com.baghira.parser.ImageNameParser;
 import com.baghira.ui.tabs.CriteriaTabFactory;
-import com.baghira.ui.tabs.JButtonListDemo;
 import com.baghira.util.CSVReader;
 import com.baghira.util.CriteriaTabType;
 import com.baghira.util.UrlAndPathHelper;
@@ -20,34 +19,24 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-
-import static com.baghira.ui.tabs.Main.createAndShowGUI;
 
 public class RemoteImageDownloaderView extends JDialog implements DownloadListener {
     JPanel panel;
     private JLabel syncNow;
     private JLabel disclaimer;
     private JTabbedPane tabbedPane;
-    private JPanel allTab;
-    private JPanel preFetchTab;
-    private JPanel nonPreFetchTab;
-    private JList<String> imageList;
-    private JList<String> preFetchImageList;
-    private JList<String> nonPreFetchImageList;
     private final Project project;
     CSVReader reader;
 
-    private List<Pair<String, String>> allFileNameAndTypeList;
-    private List<Pair<String, String>> preFetchedFileNameAndTypeList;
-    private List<Pair<String, String>> nonPreFetchedFileNameAndTypeList;
-    HashSet<Pair<String, String>> allImagesName;
-    HashSet<Pair<String, String>> preFetchedImagesName;
+    HashSet<Pair<String, String>> allImagesNameAndType;
+    List<String> allImagesNameList;
+    List<String> preFetchedNameList;
+    List<String> nonPreFetchedNameList;
     private UrlAndPathHelper urlAndPathHelper;
-    private List<ImageIcon> imageIconList;
-    private String[] imageNames;
     private final Color greyBgColor = new Color(109, 107, 107, 223);
     private final Color originalBgColor = new Color(43, 43, 43);
 
@@ -57,60 +46,16 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         init();
     }
 
-    private void init() {
-        initUrlAndPathHelper();
-        initEntriesFinder();
-        initCsvReaderAndUpdateDistinctFileName();
-        initAllTabImageIconAndName();
-        createDownloadUrl();
-        startImageDownloader();
-    }
-
-    private void initTabs() {
-        tabbedPane.removeAll();
-        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(allFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(allFileNameAndTypeList), CriteriaTabType.ALL));
-        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(preFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(preFetchedFileNameAndTypeList), CriteriaTabType.PRE_FETCHED));
-        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(nonPreFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(nonPreFetchedFileNameAndTypeList), CriteriaTabType.NON_PRE_FETCHED));
-    }
-
-    private void initEntriesFinder() {
-        ImageNameParser entriesFinder = new ImageNameParser();
-        entriesFinder.initEntriesSearch(project.getBasePath());
-        allImagesName = entriesFinder.getAllImagesName();
-    }
-
     private void setUIComponentAttributes() {
         setImageListAttributes();
         setDisclaimerAttributes();
         setActionListener();
     }
 
-    private void setActionListener() {
-        syncNow.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                syncNow.setOpaque(true);
-                syncNow.setForeground(greyBgColor);
-                System.out.println("clicked");
-                imageList.setVisible(false);
-                SwingUtilities.invokeLater(() -> {
-                    init();
-                    imageList.setVisible(true);
-                });
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                syncNow.setOpaque(true);
-                syncNow.setBackground(greyBgColor);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                syncNow.setOpaque(false);
-                syncNow.setBackground(originalBgColor);
-            }
-        });
+    private void setImageListAttributes() {
+        syncNow.setIcon(AllIcons.Javaee.UpdateRunningApplication);
+        syncNow.setOpaque(true);
+        syncNow.setForeground(JBColor.BLUE);
     }
 
     private void setDisclaimerAttributes() {
@@ -122,58 +67,67 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         disclaimer.setBorder(new CompoundBorder(border, margin));
     }
 
-    private void initAllTabImageIconAndName() {
-        imageIconList = new ArrayList<>();
-        imageNames = new String[allFileNameAndTypeList.size()];
+    private void setActionListener() {
+        syncNow.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                syncNow.setOpaque(true);
+                syncNow.setForeground(JBColor.ORANGE);
+                syncNow.setBackground(greyBgColor);
+                System.out.println("clicked");
+                SwingUtilities.invokeLater(() -> {
+                    int index = tabbedPane.getSelectedIndex();
+                    System.out.println("selected index = " + index);
+                    init();
+                    System.out.println(tabbedPane.getTabCount());
+                });
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                syncNow.setOpaque(true);
+                syncNow.setForeground(JBColor.PINK);
+                syncNow.setBackground(greyBgColor);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                syncNow.setOpaque(false);
+                syncNow.setForeground(JBColor.BLUE);
+                syncNow.setBackground(originalBgColor);
+            }
+        });
     }
 
-    private void createDownloadUrl() {
-        int pos = 0;
-        for (Pair<String, String> fileNameAndType : allFileNameAndTypeList) {
-            urlAndPathHelper.addToRemoteUrlList(fileNameAndType.second, fileNameAndType.first);
-            addToImageNamesArray(pos, fileNameAndType.first);
-            pos++;
-        }
-    }
-
-    private void addToImageNamesArray(int pos, String fileName) {
-        imageNames[pos] = fileName;
+    private void init() {
+        initUrlAndPathHelper();
+        initEntriesFinder();
+        initCsvReaderAndUpdateDistinctFileName();
+        createDownloadUrl();
+        startImageDownloader();
     }
 
     private void initUrlAndPathHelper() {
         urlAndPathHelper = new UrlAndPathHelper(project);
     }
 
-    private void setImageListAttributes() {
-        syncNow.setIcon(AllIcons.Javaee.UpdateRunningApplication);
-        imageList.setBorder(JBUI.Borders.empty(20));
-        imageList.setFixedCellWidth(190);
-        imageList.setFixedCellHeight(170);
+    private void initEntriesFinder() {
+        ImageNameParser entriesFinder = new ImageNameParser();
+        entriesFinder.initEntriesSearch(project.getBasePath());
+        allImagesNameAndType = entriesFinder.getAllImagesName();
     }
 
     private void initCsvReaderAndUpdateDistinctFileName() {
         reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader();
         List<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
-        updateDistinctFileNameForAllTab(distinctFilesName);
-        updateDistinctFileNameForPreFetchedTab(distinctFilesName);
-        updateDistinctFileNameForNonPreFetchedTab();
+        updateDistinctFileNameAndType(distinctFilesName);
     }
 
-    private void updateDistinctFileNameForAllTab(List<Pair<String, String>> distinctFilesName) {
-        allImagesName.addAll(distinctFilesName);
-        allFileNameAndTypeList = new ArrayList<>(allImagesName);
-    }
-
-    private void updateDistinctFileNameForPreFetchedTab(List<Pair<String, String>> distinctFilesName) {
-        preFetchedImagesName = new HashSet<>(distinctFilesName);
-        preFetchedFileNameAndTypeList = new ArrayList<>(preFetchedImagesName);
-    }
-
-    private void updateDistinctFileNameForNonPreFetchedTab() {
-        HashSet<Pair<String, String>> nonPreFetchedName = new HashSet<>(allImagesName);
-        nonPreFetchedName.removeAll(preFetchedImagesName);
-        nonPreFetchedFileNameAndTypeList = new ArrayList<>(nonPreFetchedName);
+    private void createDownloadUrl() {
+        for (Pair<String, String> fileNameAndType : allImagesNameAndType) {
+            urlAndPathHelper.addToRemoteUrlList(fileNameAndType.second, fileNameAndType.first);
+        }
     }
 
     private void startImageDownloader() {
@@ -181,26 +135,47 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         imageDownloader.initDownload();
     }
 
-    private void updateImageIconList() {
-        List<String> localFileLocationList = urlAndPathHelper.getLocalFilePathList(allFileNameAndTypeList);
-        for (String path : localFileLocationList) {
-            imageIconList.add(getImageIcon(path));
-        }
+    private void updateDistinctFileNameAndType(List<Pair<String, String>> distinctFilesName) {
+        allImagesNameAndType.addAll(distinctFilesName);
     }
 
-    private ImageIcon getImageIcon(String path) {
-        ImageIcon imageIcon = new ImageIcon(path);
-        Image image = imageIcon.getImage();
-        Image newImg = image.getScaledInstance(200, 160, Image.SCALE_DEFAULT);
-        imageIcon = new ImageIcon(newImg);
-        return imageIcon;
+    private void initTabs() {
+        int index = tabbedPane.getSelectedIndex();
+        tabbedPane.removeAll();
+        updateSuccessfulDownloadList();
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(allImagesNameList), CriteriaTabType.ALL));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(preFetchedNameList), CriteriaTabType.PRE_FETCHED));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(nonPreFetchedNameList), CriteriaTabType.NON_PRE_FETCHED));
+        tabbedPane.setSelectedIndex(index == -1 ? 0 : index);
+    }
+
+    private void updateSuccessfulDownloadList() {
+        List<String> failedDownloadUrl = urlAndPathHelper.getFailedUrlList();
+        List<String> failedDownloadNames = new ArrayList<>();
+
+        for (String failedUrl : failedDownloadUrl) {
+            failedDownloadNames.add(failedUrl.substring(failedUrl.lastIndexOf(File.separator) + 1));
+        }
+        allImagesNameList = new ArrayList<>();
+        preFetchedNameList = new ArrayList<>();
+        nonPreFetchedNameList = new ArrayList<>();
+        for (Pair<String, String> nameAndType : allImagesNameAndType) {
+            allImagesNameList.add(nameAndType.first);
+        }
+        System.out.println("failed: " + failedDownloadNames);
+        allImagesNameList.removeAll(failedDownloadNames);
+        List<Pair<String, String>> readerEntries = reader.getDistinctFilesName();
+        readerEntries.removeIf(imageName -> failedDownloadNames.contains(imageName.first));
+        for (Pair<String, String> nameAndType : readerEntries) {
+            preFetchedNameList.add(nameAndType.first);
+        }
+        nonPreFetchedNameList = new ArrayList<>(allImagesNameList);
+        nonPreFetchedNameList.removeAll(preFetchedNameList);
+
     }
 
     @Override
     public void setIconsDetailInView() {
         initTabs();
-//        updateImageIconList();
-//        imageList.setListData(imageNames);
-//        imageList.setCellRenderer(new DownloadedImageCellRenderer(imageIconList));
     }
 }

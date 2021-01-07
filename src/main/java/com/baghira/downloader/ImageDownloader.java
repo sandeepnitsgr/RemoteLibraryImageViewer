@@ -75,7 +75,7 @@ public class ImageDownloader {
     }
 
     private void addLocalFileLocationToList(String localFileLocation) {
-        urlAndPathHelper.addToLocalFileLocationList(localFileLocation);
+        urlAndPathHelper.addToDownloadSuccessList(localFileLocation);
     }
 
 }

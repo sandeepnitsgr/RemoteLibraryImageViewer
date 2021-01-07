@@ -1,7 +1,6 @@
 package com.baghira.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,13 +23,13 @@ public class UrlAndPathHelper {
             File.separator +
             "resources_description.csv";
     private final Project project;
-    private final List<String> localFilePathList;
+    private final List<String> successLocalPathList;
     private final List<String> failedUrlList;
 
     public UrlAndPathHelper(Project project) {
         this.project = project;
         remoteUrlList = new ArrayList<>();
-        localFilePathList = new ArrayList<>();
+        successLocalPathList = new ArrayList<>();
         failedUrlList = new ArrayList<>();
     }
 
@@ -66,10 +65,10 @@ public class UrlAndPathHelper {
         return remoteUrlList;
     }
 
-    public List<String> getLocalFilePathList(List<Pair<String, String>> fileNameAndTypeList) {
+    public List<String> getLocalFilePathList(List<String> fileNameAndTypeList) {
         List<String> list = new ArrayList<>();
-        for(Pair<String, String> fileNameTypePair : fileNameAndTypeList) {
-            list.add(getLocalFileBasePath()+ File.separator + fileNameTypePair.first);
+        for (String fileNameTypePair : fileNameAndTypeList) {
+            list.add(getLocalFileBasePath() + File.separator + fileNameTypePair);
         }
         return list;
     }
@@ -78,8 +77,12 @@ public class UrlAndPathHelper {
         return failedUrlList;
     }
 
-    public void addToLocalFileLocationList(String localFileLocation) {
-        localFilePathList.add(localFileLocation);
+    public List<String> getSuccessLocalPathList() {
+        return successLocalPathList;
+    }
+
+    public void addToDownloadSuccessList(String localFileLocation) {
+        successLocalPathList.add(localFileLocation);
     }
 
     public void addToFailedUrlList(String urlStr) {

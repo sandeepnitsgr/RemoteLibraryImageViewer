@@ -22,7 +22,7 @@ public class DownloadedImageCellRenderer extends DefaultListCellRenderer {
 
         JLabel label = (JLabel) super.getListCellRendererComponent(
                 list, value, index, isSelected, cellHasFocus);
-        label.setForeground(JBColor.RED);
+        label.setForeground(JBColor.GREEN);
         label.setOpaque(true);
         label.setIcon(iconList.get(index));
         label.setIconTextGap(5);

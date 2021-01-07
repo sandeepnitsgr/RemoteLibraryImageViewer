@@ -6,14 +6,14 @@ import com.intellij.openapi.util.Pair;
 import java.util.List;
 
 public class CriteriaTabFactory {
-    public static CriteriaTabsAbstract getTab(List<Pair<String, String>> fileNameAndTypeList, List<String> filePath, CriteriaTabType tabType) {
+    public static CriteriaTabsAbstract getTab(List<String> fileNamesList, CriteriaTabType tabType) {
         switch (tabType) {
             case ALL:
-                return new AllCriteriaTab(fileNameAndTypeList, filePath);
+                return new AllCriteriaTab(fileNamesList);
             case PRE_FETCHED:
-                return new PreFetchedCriteriaTab(fileNameAndTypeList, filePath);
+                return new PreFetchedCriteriaTab(fileNamesList);
             case NON_PRE_FETCHED:
-                return new NonPreFetchedCriteriaTab(fileNameAndTypeList, filePath);
+                return new NonPreFetchedCriteriaTab(fileNamesList);
         }
         return null;
     }
