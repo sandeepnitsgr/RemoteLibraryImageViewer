@@ -58,11 +58,6 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void init() {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
         initUrlAndPathHelper();
         initEntriesFinder();
         initCsvReaderAndUpdateDistinctFileName();

@@ -16,11 +16,11 @@ public class NonPreFetchedCriteriaTab extends CriteriaTabsAbstract {
     private final List<Pair<String, String>> nonPreFetchedFileNameAndTypeList;
 
     public NonPreFetchedCriteriaTab(List<Pair<String, String>> nonPreFetchedFileNameAndTypeList, List<String> fileNamesList) {
-        //super();
+        super();
         this.fileNamesList = fileNamesList;
         this.nonPreFetchedFileNameAndTypeList = nonPreFetchedFileNameAndTypeList;
         initData();
-        initUI();
+        //initUI();
     }
 
     private void initUI() {
