@@ -1,5 +1,6 @@
 package com.baghira.ui;
 
+import com.baghira.downloader.CsvUpdater;
 import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
 import com.baghira.parser.ImageNameParser;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class RemoteImageDownloaderView extends JDialog implements DownloadListener {
+public class RemoteImageDownloaderView extends JDialog implements DownloadListener, CsvUpdater {
     JPanel panel;
     private JLabel syncNow;
     private JLabel disclaimer;
@@ -36,6 +37,10 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     List<String> allImagesNameList;
     List<String> preFetchedNameList;
     List<String> nonPreFetchedNameList;
+    HashSet<Pair<String, String>> preFetchedImagesName;
+    private List<Pair<String, String>> allFileNameAndTypeList;
+    private List<Pair<String, String>> preFetchedFileNameAndTypeList;
+    private List<Pair<String, String>> nonPreFetchedFileNameAndTypeList;
     private UrlAndPathHelper urlAndPathHelper;
     private final Color greyBgColor = new Color(109, 107, 107, 223);
     private final Color originalBgColor = new Color(43, 43, 43);
@@ -121,7 +126,25 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader();
         List<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
-        updateDistinctFileNameAndType(distinctFilesName);
+        updateDistinctFileNameForAllTab(distinctFilesName);
+        updateDistinctFileNameForPreFetchedTab(distinctFilesName);
+        updateDistinctFileNameForNonPreFetchedTab();
+    }
+
+    private void updateDistinctFileNameForAllTab(List<Pair<String, String>> distinctFilesName) {
+        allImagesNameAndType.addAll(distinctFilesName);
+        allFileNameAndTypeList = new ArrayList<>(allImagesNameAndType);
+    }
+
+    private void updateDistinctFileNameForPreFetchedTab(List<Pair<String, String>> distinctFilesName) {
+        preFetchedImagesName = new HashSet<>(distinctFilesName);
+        preFetchedFileNameAndTypeList = new ArrayList<>(preFetchedImagesName);
+    }
+
+    private void updateDistinctFileNameForNonPreFetchedTab() {
+        HashSet<Pair<String, String>> nonPreFetchedName = new HashSet<>(allImagesNameAndType);
+        nonPreFetchedName.removeAll(preFetchedImagesName);
+        nonPreFetchedFileNameAndTypeList = new ArrayList<>(nonPreFetchedName);
     }
 
     private void createDownloadUrl() {
@@ -135,17 +158,13 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         imageDownloader.initDownload();
     }
 
-    private void updateDistinctFileNameAndType(List<Pair<String, String>> distinctFilesName) {
-        allImagesNameAndType.addAll(distinctFilesName);
-    }
-
     private void initTabs() {
         int index = tabbedPane.getSelectedIndex();
         tabbedPane.removeAll();
         updateSuccessfulDownloadList();
-        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(allImagesNameList), CriteriaTabType.ALL));
-        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(preFetchedNameList), CriteriaTabType.PRE_FETCHED));
-        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(nonPreFetchedNameList), CriteriaTabType.NON_PRE_FETCHED));
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(allFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(allImagesNameList), CriteriaTabType.ALL, this));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(preFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(preFetchedNameList), CriteriaTabType.PRE_FETCHED, this));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(nonPreFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(nonPreFetchedNameList), CriteriaTabType.NON_PRE_FETCHED, this));
         tabbedPane.setSelectedIndex(index == -1 ? 0 : index);
     }
 
@@ -177,5 +196,31 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     @Override
     public void setIconsDetailInView() {
         initTabs();
+    }
+
+    @Override
+    public void addToCsv(List<String> imageList, List<Pair<String, String>> fileNameAndTypeList) {
+        List<Pair<String, String>> finalList = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        for (Pair<String, String> nameType : fileNameAndTypeList) {
+            for (String name : imageList) {
+                if (nameType.first.equals(name)) {
+                    finalList.add(nameType);
+                    names.add(nameType.first);
+                }
+            }
+        }
+        reader.writeToCSV(finalList);
+        updateList(names);
+    }
+
+    private void updateList(List<String> imageList) {
+        updateLists(imageList);
+        initTabs();
+    }
+
+    private void updateLists(List<String> imageList) {
+        preFetchedNameList.addAll(imageList);
+        nonPreFetchedNameList.removeAll(imageList);
     }
 }

@@ -3,6 +3,8 @@ package com.baghira.util;
 import com.intellij.openapi.util.Pair;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -16,7 +18,7 @@ public class CSVReader {
     public static final String XXHDPI = "xxhdpi";
     public static final String CSV_SEPARATOR = ",";
     public static final String CUSTOMERAPP = "customerapp";
-    public static final String CUSTOMERAPP_MID_APP = "customerapp_mid_app";
+    public static final String CUSTOMERAPP_MID_APP = "customer_mid_app";
     public static final String CUSTOMERAPP_PRO = "customerapp_pro";
     public static final String SELLERAPP = "sellerapp";
     private final Set<Pair<String, String>> fileNameSet;
@@ -109,5 +111,32 @@ public class CSVReader {
 
     public List<Pair<String, String>> getDistinctFilesName() {
         return new ArrayList<>(fileNameSet);
+    }
+
+    public void writeToCSV(List<Pair<String, String>> fileNameAndTypeList) {
+        String path = initializeAndGetPath(CUSTOMERAPP_MID_APP);
+        try {
+            FileWriter csvWriter = new FileWriter(path, true);
+
+            for (Pair<String, String> nameAndType : fileNameAndTypeList) {
+                csvWriter.append("\n");
+                csvWriter.append(nameAndType.first);
+                csvWriter.append(" ");
+                csvWriter.append(",");
+                if(nameAndType.second.equals(XXHDPI)) {
+                    csvWriter.append(MULTI_DPI);
+                }else {
+                    csvWriter.append(SINGLE_DPI);
+                }
+                csvWriter.append(",");
+                csvWriter.append("   ");
+                csvWriter.append(",");
+            }
+
+            csvWriter.flush();
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

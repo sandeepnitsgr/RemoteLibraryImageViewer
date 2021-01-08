@@ -1,7 +1,11 @@
 package com.baghira.ui.tabs;
 
 
+import com.baghira.downloader.CsvUpdater;
 import com.baghira.ui.DownloadedImageCellRenderer;
+import com.baghira.util.CSVReader;
+import com.baghira.util.UrlAndPathHelper;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -24,6 +28,10 @@ public abstract class CriteriaTabsAbstract extends JPanel {
     JLabel numOfImages;
     private List<ImageIcon> imageIconList;
     private String[] imageNames;
+    CSVReader reader;
+    private UrlAndPathHelper urlAndPathHelper;
+    private CsvUpdater callBack;
+
 
     public CriteriaTabsAbstract() {
         imageList = new JBList<>();
@@ -42,6 +50,7 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         add(numOfImages, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(button, BorderLayout.SOUTH);
+        button.addActionListener(new AddToVCSListener());
     }
 
     protected abstract boolean shouldEnableSelection();
@@ -70,6 +79,11 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         }
     }
 
+    public void setCallBack(CsvUpdater callBack) {
+        this.callBack = callBack;
+
+    }
+
     private void updateImageIconList() {
         List<String> localFileLocationList = getFileNameList();
         for (String path : localFileLocationList) {
@@ -90,6 +104,8 @@ public abstract class CriteriaTabsAbstract extends JPanel {
 
     protected abstract List<String> getFileNameList();
 
+    protected abstract List<Pair<String, String>> getFileNameAndTypeList();
+
     private ImageIcon getImageIcon(String path) {
         ImageIcon imageIcon = new ImageIcon(path);
         Image image = imageIcon.getImage();
@@ -103,7 +119,8 @@ public abstract class CriteriaTabsAbstract extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-            int[] selectedIndexes = imageList.getSelectedIndices();
+            callBack.addToCsv(imageList.getSelectedValuesList(), getFileNameAndTypeList());
         }
     }
+
 }
