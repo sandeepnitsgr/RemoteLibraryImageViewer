@@ -51,6 +51,7 @@ public class ImageDownloader {
             try {
                 downloadAndSaveStream(urlStr, file, f);
             } catch (Exception e) {
+                e.printStackTrace();
                 addFailedUrlToFailedList(urlStr);
                 return;
             }
