@@ -52,6 +52,7 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                 String[] rr = res.split("\\n");
                 if (rr.length == 1) {
                     String[] localRR = res.split(":");
+                    if (localRR.length <= 1) continue;
                     String valStr = localRR[1].trim();
 
                     if (valStr.contains(".png")) {
