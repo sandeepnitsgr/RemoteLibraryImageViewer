@@ -7,9 +7,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class CSVReader {
+public class CSVReaderAndWriter {
 
 
     public static final String SINGLE_DPI = "singleDpi";
@@ -17,39 +20,25 @@ public class CSVReader {
     public static final String WEBP = "webp";
     public static final String XXHDPI = "xxhdpi";
     public static final String CSV_SEPARATOR = ",";
-    public static final String CUSTOMERAPP = "customerapp";
     public static final String CUSTOMERAPP_MID_APP = "customer_mid_app";
-    public static final String CUSTOMERAPP_PRO = "customerapp_pro";
-    public static final String SELLERAPP = "sellerapp";
+    public static final String SELLER_APP = "sellerapp";
     private final Set<Pair<String, String>> fileNameSet;
     private final String csvPath;
+    private List<String> csvModuleNameList;
 
-    public CSVReader(String basePath, String relativePath) {
+    public CSVReaderAndWriter(String basePath, String relativePath) {
         csvPath = basePath + "%s" + relativePath;
         fileNameSet = new TreeSet<>(Comparator.comparing(o -> o.first));
     }
 
-    public void initReader() {
-        initPathAndUpdateResultForCustomerapp();
-        initPathAndUpdateResultForCustomerappPro();
-        initPathAndUpdateResultForCustomerappMidApp();
-        initPathAndUpdateResultForSellerapp();
+    public void initReader(List<String> csvPathList) {
+        csvModuleNameList = csvPathList;
+        initPathAndUpdateResult(csvPathList);
     }
 
-    private void initPathAndUpdateResultForCustomerappMidApp() {
-        updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP_MID_APP));
-    }
-
-    private void initPathAndUpdateResultForCustomerappPro() {
-        updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP_PRO));
-    }
-
-    private void initPathAndUpdateResultForCustomerapp() {
-        updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP));
-    }
-
-    private void initPathAndUpdateResultForSellerapp() {
-        updateResultFromFileContent(initializeAndGetPath(SELLERAPP));
+    private void initPathAndUpdateResult(List<String> csvPathList) {
+        for (String moduleName : csvPathList)
+            updateResultFromFileContent(initializeAndGetPath(moduleName));
     }
 
     private void updateResultFromFileContent(String path) {
@@ -105,8 +94,18 @@ public class CSVReader {
         return fileNameSet;
     }
 
-    public void writeToCSV(List<Pair<String, String>> fileNameAndTypeList) {
-        String path = initializeAndGetPath(CUSTOMERAPP_MID_APP);
+    public void writeToCSV(boolean shouldAddToCustomerapp, List<Pair<String, String>> fileNameAndTypeList) {
+
+        String path;
+        try {
+            path = initializeAndGetPath(csvModuleNameList.get(shouldAddToCustomerapp ? 0 : 1));
+        } catch (Exception e) {
+            try {
+                path = initializeAndGetPath(CUSTOMERAPP_MID_APP);
+            } catch (Exception ignore) {
+                path = initializeAndGetPath(SELLER_APP);
+            }
+        }
         try {
             FileWriter csvWriter = new FileWriter(path, true);
 

@@ -4,15 +4,15 @@ import com.intellij.openapi.project.Project;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 public class UrlAndPathHelper {
     private static final String REMOTE_URL_BASE_PATH = "https://ecs7.tokopedia.net/android/res/";
     public static final String IMAGE_VIEWER = "imageviewer";
     public static final String GRADLE_LOCATION = ".gradle";
     public static final String URL_SEPARATOR = "/";
-    private HashSet<String> remoteUrlList;
+    private final TreeSet<String> remoteUrlList;
     private static final String RELATIVE_PATH = File.separator +
             "src" +
             File.separator +
@@ -29,7 +29,7 @@ public class UrlAndPathHelper {
 
     public UrlAndPathHelper(Project project) {
         this.project = project;
-        remoteUrlList = new HashSet<>();
+        remoteUrlList = new TreeSet<>();
         successfulDownloadedImageList = new ArrayList<>();
         failedUrlList = new ArrayList<>();
     }

@@ -1,25 +1,19 @@
 package com.baghira.parser;
 
-import com.baghira.search.filesystem.EntriesFinder;
-import com.baghira.search.filesystem.FileNameFinder;
-import com.baghira.search.filesystem.JavaEntriesFileNameFinder;
-import com.baghira.search.filesystem.XMLEntriesFileNameFinder;
+import com.baghira.search.filesystem.*;
 import com.intellij.openapi.util.Pair;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class ImageNameParser {
+public class AnyEntriesUsageFinder {
     public static final String METHOD_LOAD_REMOTE_IMAGE_DRAWABLE = "\\.loadRemoteImageDrawable";
     public static final String TAG_REMOTE_FILE_NAME_ATTRIBUTE = "app:remoteFileName=";
     public static final String TAG_IMAGE_DPI_TYPE = "app:imageDpiSupportType=";
+    private static final String CSV_USAGE_STRING = "resources_description";
 
     private String basePath;
-    private final HashSet<Pair<String, String>> resultSet;
-
-    public ImageNameParser() {
-        resultSet = new HashSet<>();
-    }
+    private Set<Pair<String, String>> resultSet;
+    private List<String> csvModulesNameList;
 
     public void initEntriesSearch(String basePath) {
         this.basePath = basePath;
@@ -31,9 +25,15 @@ public class ImageNameParser {
         processAndAddToResult(searchEntries(basePath,
                 TAG_REMOTE_FILE_NAME_ATTRIBUTE),
                 new XMLEntriesFileNameFinder(densityTypeResult));
+
+        processCsvModules(searchEntries(basePath, CSV_USAGE_STRING), new CSVUsageFileNameFinder());
     }
 
-    public HashSet<Pair<String, String>> getAllImagesName() {
+    private void processCsvModules(String searchEntries, FileNameFinder<List<String>> fileNameFinder) {
+        csvModulesNameList = fileNameFinder.findAllFileNames(basePath, searchEntries);
+    }
+
+    public Set<Pair<String, String>> getAllImagesName() {
         return resultSet;
     }
 
@@ -41,14 +41,11 @@ public class ImageNameParser {
         return EntriesFinder.searchEntry(path, searchString);
     }
 
-    private void processAndAddToResult(String rawSearchResult, FileNameFinder fileNameFinder) {
-        Set<Pair<String, String>> fileNameList = fileNameFinder.findAllFileNames(basePath, rawSearchResult);
-        if (fileNameList != null)
-            for (Pair<String, String> fileName : fileNameList)
-                addToResult(fileName);
+    private void processAndAddToResult(String rawSearchResult, FileNameFinder<Set<Pair<String, String>>> fileNameFinder) {
+        resultSet = fileNameFinder.findAllFileNames(basePath, rawSearchResult);
     }
 
-    private void addToResult(Pair<String, String> processedResult) {
-        resultSet.add(processedResult);
+    public List<String> getCsvUsageModulesNameList() {
+        return csvModulesNameList;
     }
 }

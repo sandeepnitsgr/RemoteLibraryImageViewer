@@ -3,10 +3,10 @@ package com.baghira.ui;
 import com.baghira.downloader.CsvUpdater;
 import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
-import com.baghira.parser.ImageNameParser;
+import com.baghira.parser.AnyEntriesUsageFinder;
 import com.baghira.ui.notification.NotificationsHelper;
 import com.baghira.ui.tabs.CriteriaTabFactory;
-import com.baghira.util.CSVReader;
+import com.baghira.util.CSVReaderAndWriter;
 import com.baghira.util.CriteriaTabType;
 import com.baghira.util.UrlAndPathHelper;
 import com.intellij.icons.AllIcons;
@@ -31,9 +31,10 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private JLabel disclaimer;
     private JTabbedPane tabbedPane;
     private final Project project;
-    CSVReader reader;
+    private CSVReaderAndWriter reader;
+    private AnyEntriesUsageFinder entriesFinder;
 
-    HashSet<Pair<String, String>> imageToDownloadSet;
+    Set<Pair<String, String>> imageToDownloadSet;
 
     HashMap<String, Pair<String, String>> fileNameAndTypeMap;
 
@@ -124,14 +125,14 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void initEntriesFinder() {
-        ImageNameParser entriesFinder = new ImageNameParser();
+        entriesFinder = new AnyEntriesUsageFinder();
         entriesFinder.initEntriesSearch(project.getBasePath());
         imageToDownloadSet = entriesFinder.getAllImagesName();
     }
 
     private void initCsvReaderAndUpdateDistinctFileName() {
-        reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
-        reader.initReader();
+        reader = new CSVReaderAndWriter(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
+        reader.initReader(entriesFinder.getCsvUsageModulesNameList());
         Set<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
         for (Pair<String, String> distinctFile : distinctFilesName) {
             imageToDownloadSet.removeIf(imageToDownload -> imageToDownload.first.equals(distinctFile.first));
@@ -196,7 +197,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     @Override
-    public void addToCsv(List<String> imageList) {
+    public void addToCsv(boolean shouldAddToCustomerapp, List<String> imageList) {
         List<Pair<String, String>> finalList = new ArrayList<>();
         List<String> names = new ArrayList<>();
 
@@ -208,7 +209,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
             }
         }
 
-        reader.writeToCSV(finalList);
+        reader.writeToCSV(shouldAddToCustomerapp, finalList);
         updateList(names);
     }
 

@@ -3,10 +3,13 @@ package com.baghira.ui.tabs;
 
 import com.baghira.downloader.CsvUpdater;
 import com.baghira.ui.DownloadedImageCellRenderer;
+import com.baghira.util.TextResources;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,9 +121,19 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         public void mouseClicked(MouseEvent e) {
             List<String> selectedList = imageList.getSelectedValuesList();
             if (selectedList.size() > 0)
-                callBack.addToCsv(selectedList);
+                callBack.addToCsv(shouldAddToCustomerapp(), selectedList);
             else
                 callBack.showNotification("<b>Note</b><br/><b>Please select at least 1 image from non-prefetched list!</b>");
+        }
+
+        private boolean shouldAddToCustomerapp() {
+            int ok = Messages.showOkCancelDialog(
+                    TextResources.getShouldAddToCustomerappString(),
+                    TextResources.getCustomerSellerappTitle(),
+                    TextResources.getCustomerapp(),
+                    TextResources.getSellerapp(),
+                    UIUtil.getQuestionIcon());
+            return ok == 0;
         }
 
         @Override

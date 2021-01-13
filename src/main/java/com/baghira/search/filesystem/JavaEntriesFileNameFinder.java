@@ -1,15 +1,16 @@
 package com.baghira.search.filesystem;
 
-
 import com.intellij.openapi.util.Pair;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class JavaEntriesFileNameFinder implements FileNameFinder {
+public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String, String>>> {
     @Override
-    public HashSet<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
-        HashSet<Pair<String, String>> fileNames = new HashSet<>();
+    public Set<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
+        TreeSet<Pair<String, String>> fileNames = new TreeSet<>(Comparator.comparing(o -> o.first));
         String[] ss = rawString.split("\\n");
         for (String s : ss) {
             if (s == null ||

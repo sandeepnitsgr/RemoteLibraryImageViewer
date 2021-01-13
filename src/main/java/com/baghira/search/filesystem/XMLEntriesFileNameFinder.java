@@ -3,11 +3,9 @@ package com.baghira.search.filesystem;
 import com.intellij.openapi.util.Pair;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
-public class XMLEntriesFileNameFinder implements FileNameFinder {
+public class XMLEntriesFileNameFinder implements FileNameFinder<Set<Pair<String, String>>> {
     String typeResult;
     Map<String, String> dpiTypeAndFileName;
 
@@ -17,8 +15,8 @@ public class XMLEntriesFileNameFinder implements FileNameFinder {
     }
 
     @Override
-    public HashSet<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
-        HashSet<Pair<String, String>> result = new HashSet<>();
+    public Set<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
+        TreeSet<Pair<String, String>> result = new TreeSet<>(Comparator.comparing(o -> o.first));
         findFileNameForDensityType();
         String[] entries = rawString.split("\\n");
         for (String entry : entries) {
