@@ -9,14 +9,9 @@ import java.util.List;
 public class NonPreFetchedCriteriaTab extends CriteriaTabsAbstract {
 
     private final List<String> fileNamesList;
-    private List<Pair<String, String>> fileNameAndTypeList;
 
-    private CsvUpdater callBack;
-
-    public NonPreFetchedCriteriaTab(List<Pair<String, String>> nonPreFetchedFileNameAndTypeList, List<String> fileNamesList, RemoteImageDownloaderView remoteImageDownloaderView) {
+    public NonPreFetchedCriteriaTab(List<String> fileNamesList, CsvUpdater callBack) {
         super();
-        callBack = remoteImageDownloaderView;
-        this.fileNameAndTypeList = nonPreFetchedFileNameAndTypeList;
         this.fileNamesList = fileNamesList;
         initData();
         setCallBack(callBack);
@@ -29,16 +24,16 @@ public class NonPreFetchedCriteriaTab extends CriteriaTabsAbstract {
 
     @Override
     protected boolean getButtonVisibility() {
-        return true;
+        return fileNamesList.size() > 0;
+    }
+
+    @Override
+    protected String getAdditionalHeaderText() {
+        return null;
     }
 
     @Override
     protected List<String> getFileNameList() {
         return fileNamesList;
-    }
-
-    @Override
-    protected List<Pair<String, String>> getFileNameAndTypeList() {
-        return fileNameAndTypeList;
     }
 }

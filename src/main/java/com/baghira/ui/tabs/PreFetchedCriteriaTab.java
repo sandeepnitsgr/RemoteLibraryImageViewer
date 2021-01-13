@@ -6,13 +6,11 @@ import java.util.List;
 
 public class PreFetchedCriteriaTab extends CriteriaTabsAbstract {
     private final List<String> fileNamesList;
-    List<Pair<String, String>> allPreFetchedFileNameAndTypeList;
 
 
-    public PreFetchedCriteriaTab(List<Pair<String, String>> fileNameAndTypeList, List<String> fileNamesList) {
+    public PreFetchedCriteriaTab(List<String> fileNamesList) {
         super();
         this.fileNamesList = fileNamesList;
-        this.allPreFetchedFileNameAndTypeList = fileNameAndTypeList;
         initData();
     }
 
@@ -27,12 +25,13 @@ public class PreFetchedCriteriaTab extends CriteriaTabsAbstract {
     }
 
     @Override
+    protected String getAdditionalHeaderText() {
+        return null;
+    }
+
+    @Override
     protected List<String> getFileNameList() {
         return fileNamesList;
     }
 
-    @Override
-    protected List<Pair<String, String>> getFileNameAndTypeList() {
-        return allPreFetchedFileNameAndTypeList;
-    }
 }

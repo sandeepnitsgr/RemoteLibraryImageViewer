@@ -3,22 +3,17 @@ package com.baghira.ui.tabs;
 
 import com.baghira.downloader.CsvUpdater;
 import com.baghira.ui.DownloadedImageCellRenderer;
-import com.baghira.util.CSVReader;
-import com.baghira.util.UrlAndPathHelper;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class CriteriaTabsAbstract extends JPanel {
@@ -28,8 +23,6 @@ public abstract class CriteriaTabsAbstract extends JPanel {
     JLabel numOfImages;
     private List<ImageIcon> imageIconList;
     private String[] imageNames;
-    CSVReader reader;
-    private UrlAndPathHelper urlAndPathHelper;
     private CsvUpdater callBack;
 
 
@@ -41,16 +34,16 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         scrollPane = new JBScrollPane(imageList);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         button = new JButton("Add To CSV");
+        button.setOpaque(true);
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(JBColor.CYAN, 5),
-                BorderFactory.createEmptyBorder(5, 5, 10, 10)));
-        button.setVisible(getButtonVisibility());
+                BorderFactory.createEmptyBorder(),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         setLayout(new BorderLayout());
         numOfImages = new JLabel();
         add(numOfImages, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(button, BorderLayout.SOUTH);
-        button.addActionListener(new AddToVCSListener());
+        button.addMouseListener(new AddToVCSListener());
     }
 
     protected abstract boolean shouldEnableSelection();
@@ -62,14 +55,17 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         updateImageIconList();
         imageList.setListData(imageNames);
         imageList.setCellRenderer(new DownloadedImageCellRenderer(imageIconList));
-        numOfImages.setText(imageNames.length + " Images");
+        String additionalHeaderText = getAdditionalHeaderText();
+        String headerText = "<html>    " + imageNames.length + " Images. " +
+                (additionalHeaderText != null ? "<font color=\"orange\">" + additionalHeaderText + "</font></html>" : "");
+
+        numOfImages.setText(headerText);
+        numOfImages.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         numOfImages.setVisible(true);
-        ListSelectionListener listener = null;
         if (shouldEnableSelection()) {
             imageList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             imageList.addListSelectionListener(listSelectionEvent -> {
                 int[] selectedIndexes = imageList.getSelectedIndices();
-                System.out.println(Arrays.toString(selectedIndexes));
                 for (int index : selectedIndexes) {
                     imageList.getModel().getElementAt(index);
                 }
@@ -77,7 +73,10 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         } else {
             imageList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
+        button.setVisible(getButtonVisibility());
     }
+
+    protected abstract String getAdditionalHeaderText();
 
     public void setCallBack(CsvUpdater callBack) {
         this.callBack = callBack;
@@ -97,14 +96,12 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         List<String> list = getFileNameList();
         imageNames = new String[list.size()];
         int count = 0;
-        for (String fileNameAndType : getFileNameList()) {
+        for (String fileNameAndType : list) {
             imageNames[count++] = fileNameAndType.substring(fileNameAndType.lastIndexOf(File.separator) + 1);
         }
     }
 
     protected abstract List<String> getFileNameList();
-
-    protected abstract List<Pair<String, String>> getFileNameAndTypeList();
 
     private ImageIcon getImageIcon(String path) {
         ImageIcon imageIcon = new ImageIcon(path);
@@ -115,11 +112,37 @@ public abstract class CriteriaTabsAbstract extends JPanel {
     }
 
 
-    private class AddToVCSListener implements ActionListener {
+    private class AddToVCSListener extends MouseAdapter {
 
         @Override
-        public void actionPerformed(ActionEvent actionEvent) {
-            callBack.addToCsv(imageList.getSelectedValuesList(), getFileNameAndTypeList());
+        public void mouseClicked(MouseEvent e) {
+            List<String> selectedList = imageList.getSelectedValuesList();
+            if (selectedList.size() > 0)
+                callBack.addToCsv(selectedList);
+            else
+                callBack.showNotification("<b>Note</b><br/><b>Please select at least 1 image from non-prefetched list!</b>");
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            button.setForeground(JBColor.GREEN);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            button.setForeground(UIManager.getColor("java.lang.String"));
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            button.setOpaque(true);
+            button.setBackground(JBColor.GREEN);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            button.setBackground(UIManager.getColor("control"));
+
         }
     }
 

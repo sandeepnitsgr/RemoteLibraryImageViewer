@@ -34,7 +34,6 @@ public class CSVReader {
         initPathAndUpdateResultForCustomerappPro();
         initPathAndUpdateResultForCustomerappMidApp();
         initPathAndUpdateResultForSellerapp();
-        //initAllRemoteFiesAndUpdateResult();
     }
 
     private void initPathAndUpdateResultForCustomerappMidApp() {
@@ -44,13 +43,6 @@ public class CSVReader {
     private void initPathAndUpdateResultForCustomerappPro() {
         updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP_PRO));
     }
-
-//    private void initAllRemoteFiesAndUpdateResult() {
-//        String[] remoteFiles = AllRemoteFilesAndType.ALL_FILES.split("\n");
-//        for (String remoteFileDetails : remoteFiles) {
-//            fetchImageDetailsAndUpdateSet(remoteFileDetails);
-//        }
-//    }
 
     private void initPathAndUpdateResultForCustomerapp() {
         updateResultFromFileContent(initializeAndGetPath(CUSTOMERAPP));
@@ -109,8 +101,8 @@ public class CSVReader {
         return String.format(csvPath, app);
     }
 
-    public List<Pair<String, String>> getDistinctFilesName() {
-        return new ArrayList<>(fileNameSet);
+    public Set<Pair<String, String>> getDistinctFilesName() {
+        return fileNameSet;
     }
 
     public void writeToCSV(List<Pair<String, String>> fileNameAndTypeList) {
@@ -123,9 +115,9 @@ public class CSVReader {
                 csvWriter.append(nameAndType.first);
                 csvWriter.append(" ");
                 csvWriter.append(",");
-                if(nameAndType.second.equals(XXHDPI)) {
+                if (nameAndType.second.equals(XXHDPI)) {
                     csvWriter.append(MULTI_DPI);
-                }else {
+                } else {
                     csvWriter.append(SINGLE_DPI);
                 }
                 csvWriter.append(",");

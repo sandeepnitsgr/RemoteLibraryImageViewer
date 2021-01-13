@@ -27,7 +27,6 @@ public class EntriesFinder {
             outputGobbler.join();
             errorGobbler.join();
             output = outputGobbler.getOutput();
-            System.out.println(FINAL_OUTPUT + output);
 
         } catch (Throwable t) {
             t.printStackTrace();

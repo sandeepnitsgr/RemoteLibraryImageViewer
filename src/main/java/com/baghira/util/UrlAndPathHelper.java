@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class UrlAndPathHelper {
@@ -11,7 +12,7 @@ public class UrlAndPathHelper {
     public static final String IMAGE_VIEWER = "imageviewer";
     public static final String GRADLE_LOCATION = ".gradle";
     public static final String URL_SEPARATOR = "/";
-    private List<String> remoteUrlList;
+    private HashSet<String> remoteUrlList;
     private static final String RELATIVE_PATH = File.separator +
             "src" +
             File.separator +
@@ -23,13 +24,13 @@ public class UrlAndPathHelper {
             File.separator +
             "resources_description.csv";
     private final Project project;
-    private final List<String> successLocalPathList;
+    private final List<String> successfulDownloadedImageList;
     private final List<String> failedUrlList;
 
     public UrlAndPathHelper(Project project) {
         this.project = project;
-        remoteUrlList = new ArrayList<>();
-        successLocalPathList = new ArrayList<>();
+        remoteUrlList = new HashSet<>();
+        successfulDownloadedImageList = new ArrayList<>();
         failedUrlList = new ArrayList<>();
     }
 
@@ -62,7 +63,7 @@ public class UrlAndPathHelper {
     }
 
     public List<String> getRemoteUrlList() {
-        return remoteUrlList;
+        return new ArrayList<>(remoteUrlList);
     }
 
     public List<String> getLocalFilePathList(List<String> fileNameAndTypeList) {
@@ -77,12 +78,12 @@ public class UrlAndPathHelper {
         return failedUrlList;
     }
 
-    public List<String> getSuccessLocalPathList() {
-        return successLocalPathList;
+    public List<String> getSuccessfulDownloadedImageList() {
+        return successfulDownloadedImageList;
     }
 
     public void addToDownloadSuccessList(String localFileLocation) {
-        successLocalPathList.add(localFileLocation);
+        successfulDownloadedImageList.add(localFileLocation.substring(localFileLocation.lastIndexOf(File.separator) + 1));
     }
 
     public void addToFailedUrlList(String urlStr) {

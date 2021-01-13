@@ -4,6 +4,7 @@ import com.baghira.downloader.CsvUpdater;
 import com.baghira.downloader.DownloadListener;
 import com.baghira.downloader.ImageDownloader;
 import com.baghira.parser.ImageNameParser;
+import com.baghira.ui.notification.NotificationsHelper;
 import com.baghira.ui.tabs.CriteriaTabFactory;
 import com.baghira.util.CSVReader;
 import com.baghira.util.CriteriaTabType;
@@ -21,9 +22,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.*;
 
 public class RemoteImageDownloaderView extends JDialog implements DownloadListener, CsvUpdater {
     JPanel panel;
@@ -33,17 +33,18 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private final Project project;
     CSVReader reader;
 
-    HashSet<Pair<String, String>> allImagesNameAndType;
-    List<String> allImagesNameList;
-    List<String> preFetchedNameList;
-    List<String> nonPreFetchedNameList;
-    HashSet<Pair<String, String>> preFetchedImagesName;
-    private List<Pair<String, String>> allFileNameAndTypeList;
-    private List<Pair<String, String>> preFetchedFileNameAndTypeList;
-    private List<Pair<String, String>> nonPreFetchedFileNameAndTypeList;
+    HashSet<Pair<String, String>> imageToDownloadSet;
+
+    HashMap<String, Pair<String, String>> fileNameAndTypeMap;
+
+    List<String> successfulDownloadAllList;
+    List<String> successfulPreFetchedList;
+    List<String> successfulNonPreFetchedList;
+    List<String> downloadFailedList;
+
+
     private UrlAndPathHelper urlAndPathHelper;
     private final Color greyBgColor = new Color(109, 107, 107, 223);
-    private final Color originalBgColor = new Color(43, 43, 43);
 
     public RemoteImageDownloaderView(Project project) {
         this.project = project;
@@ -75,16 +76,22 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private void setActionListener() {
         syncNow.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                syncNow.setOpaque(true);
+            public void mousePressed(MouseEvent e) {
                 syncNow.setForeground(JBColor.ORANGE);
                 syncNow.setBackground(greyBgColor);
-                System.out.println("clicked");
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                syncNow.setForeground(JBColor.PINK);
+                syncNow.setBackground(UIManager.getColor("control"));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                syncNow.setOpaque(true);
                 SwingUtilities.invokeLater(() -> {
-                    int index = tabbedPane.getSelectedIndex();
-                    System.out.println("selected index = " + index);
                     init();
-                    System.out.println(tabbedPane.getTabCount());
                 });
             }
 
@@ -99,7 +106,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
             public void mouseExited(MouseEvent e) {
                 syncNow.setOpaque(false);
                 syncNow.setForeground(JBColor.BLUE);
-                syncNow.setBackground(originalBgColor);
+                syncNow.setBackground(UIManager.getColor("control"));
             }
         });
     }
@@ -119,37 +126,28 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private void initEntriesFinder() {
         ImageNameParser entriesFinder = new ImageNameParser();
         entriesFinder.initEntriesSearch(project.getBasePath());
-        allImagesNameAndType = entriesFinder.getAllImagesName();
+        imageToDownloadSet = entriesFinder.getAllImagesName();
     }
 
     private void initCsvReaderAndUpdateDistinctFileName() {
         reader = new CSVReader(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader();
-        List<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
-        updateDistinctFileNameForAllTab(distinctFilesName);
-        updateDistinctFileNameForPreFetchedTab(distinctFilesName);
-        updateDistinctFileNameForNonPreFetchedTab();
+        Set<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
+        for (Pair<String, String> distinctFile : distinctFilesName) {
+            imageToDownloadSet.removeIf(imageToDownload -> imageToDownload.first.equals(distinctFile.first));
+        }
+        updateDistinctFileName(distinctFilesName);
     }
 
-    private void updateDistinctFileNameForAllTab(List<Pair<String, String>> distinctFilesName) {
-        allImagesNameAndType.addAll(distinctFilesName);
-        allFileNameAndTypeList = new ArrayList<>(allImagesNameAndType);
-    }
-
-    private void updateDistinctFileNameForPreFetchedTab(List<Pair<String, String>> distinctFilesName) {
-        preFetchedImagesName = new HashSet<>(distinctFilesName);
-        preFetchedFileNameAndTypeList = new ArrayList<>(preFetchedImagesName);
-    }
-
-    private void updateDistinctFileNameForNonPreFetchedTab() {
-        HashSet<Pair<String, String>> nonPreFetchedName = new HashSet<>(allImagesNameAndType);
-        nonPreFetchedName.removeAll(preFetchedImagesName);
-        nonPreFetchedFileNameAndTypeList = new ArrayList<>(nonPreFetchedName);
+    private void updateDistinctFileName(Set<Pair<String, String>> distinctFilesName) {
+        imageToDownloadSet.addAll(distinctFilesName);
     }
 
     private void createDownloadUrl() {
-        for (Pair<String, String> fileNameAndType : allImagesNameAndType) {
+        fileNameAndTypeMap = new HashMap<>();
+        for (Pair<String, String> fileNameAndType : imageToDownloadSet) {
             urlAndPathHelper.addToRemoteUrlList(fileNameAndType.second, fileNameAndType.first);
+            fileNameAndTypeMap.put(fileNameAndType.first, fileNameAndType);
         }
     }
 
@@ -162,35 +160,34 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         int index = tabbedPane.getSelectedIndex();
         tabbedPane.removeAll();
         updateSuccessfulDownloadList();
-        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(allFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(allImagesNameList), CriteriaTabType.ALL, this));
-        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(preFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(preFetchedNameList), CriteriaTabType.PRE_FETCHED, this));
-        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(nonPreFetchedFileNameAndTypeList, urlAndPathHelper.getLocalFilePathList(nonPreFetchedNameList), CriteriaTabType.NON_PRE_FETCHED, this));
-        tabbedPane.setSelectedIndex(index == -1 ? 0 : index);
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulDownloadAllList), CriteriaTabType.ALL, this));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulPreFetchedList), CriteriaTabType.PRE_FETCHED, this));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulNonPreFetchedList), CriteriaTabType.NON_PRE_FETCHED, this));
+        if (urlAndPathHelper.getFailedUrlList().size() > 0)
+            tabbedPane.addTab("Download Failed", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(downloadFailedList), CriteriaTabType.DOWNLOAD_FAILED, this));
+        tabbedPane.setSelectedIndex(index == -1 ? 0 : (index < tabbedPane.getTabCount()? index : 0));
     }
 
     private void updateSuccessfulDownloadList() {
         List<String> failedDownloadUrl = urlAndPathHelper.getFailedUrlList();
-        List<String> failedDownloadNames = new ArrayList<>();
+        downloadFailedList = new ArrayList<>();
 
         for (String failedUrl : failedDownloadUrl) {
-            failedDownloadNames.add(failedUrl.substring(failedUrl.lastIndexOf(File.separator) + 1));
+            downloadFailedList.add(failedUrl.substring(failedUrl.lastIndexOf(File.separator) + 1));
         }
-        allImagesNameList = new ArrayList<>();
-        preFetchedNameList = new ArrayList<>();
-        nonPreFetchedNameList = new ArrayList<>();
-        for (Pair<String, String> nameAndType : allImagesNameAndType) {
-            allImagesNameList.add(nameAndType.first);
-        }
-        System.out.println("failed: " + failedDownloadNames);
-        allImagesNameList.removeAll(failedDownloadNames);
-        List<Pair<String, String>> readerEntries = reader.getDistinctFilesName();
-        readerEntries.removeIf(imageName -> failedDownloadNames.contains(imageName.first));
-        for (Pair<String, String> nameAndType : readerEntries) {
-            preFetchedNameList.add(nameAndType.first);
-        }
-        nonPreFetchedNameList = new ArrayList<>(allImagesNameList);
-        nonPreFetchedNameList.removeAll(preFetchedNameList);
+        successfulDownloadAllList = urlAndPathHelper.getSuccessfulDownloadedImageList();
+        Set<Pair<String, String>> distinctFilesNameList = reader.getDistinctFilesName();
 
+        distinctFilesNameList.removeIf(distinctFiles -> downloadFailedList.contains(distinctFiles.first));
+        successfulPreFetchedList = new ArrayList<>();
+
+        for (Pair<String, String> entry : distinctFilesNameList) {
+            successfulPreFetchedList.add(entry.first);
+        }
+
+        successfulNonPreFetchedList = new ArrayList<>(successfulDownloadAllList);
+
+        successfulNonPreFetchedList.removeIf(entry -> successfulPreFetchedList.contains(entry));
     }
 
     @Override
@@ -199,28 +196,34 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     @Override
-    public void addToCsv(List<String> imageList, List<Pair<String, String>> fileNameAndTypeList) {
+    public void addToCsv(List<String> imageList) {
         List<Pair<String, String>> finalList = new ArrayList<>();
         List<String> names = new ArrayList<>();
-        for (Pair<String, String> nameType : fileNameAndTypeList) {
-            for (String name : imageList) {
-                if (nameType.first.equals(name)) {
-                    finalList.add(nameType);
-                    names.add(nameType.first);
-                }
+
+        for (String name : imageList) {
+            if (fileNameAndTypeMap.containsKey(name)) {
+                Pair<String, String> nameType = fileNameAndTypeMap.get(name);
+                finalList.add(nameType);
+                names.add(nameType.first);
             }
         }
+
         reader.writeToCSV(finalList);
         updateList(names);
     }
 
+    @Override
+    public void showNotification(String message) {
+        NotificationsHelper.showNotification(project, message);
+    }
+
     private void updateList(List<String> imageList) {
         updateLists(imageList);
-        initTabs();
+        init();
     }
 
     private void updateLists(List<String> imageList) {
-        preFetchedNameList.addAll(imageList);
-        nonPreFetchedNameList.removeAll(imageList);
+        successfulPreFetchedList.addAll(imageList);
+        successfulNonPreFetchedList.removeAll(imageList);
     }
 }
