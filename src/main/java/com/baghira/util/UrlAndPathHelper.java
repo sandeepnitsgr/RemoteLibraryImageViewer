@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -25,12 +26,14 @@ public class UrlAndPathHelper {
             "resources_description.csv";
     private final Project project;
     private final List<String> successfulDownloadedImageList;
+    private final HashSet<String> successfulDownloadedImages;
     private final List<String> failedUrlList;
 
     public UrlAndPathHelper(Project project) {
         this.project = project;
         remoteUrlList = new TreeSet<>();
         successfulDownloadedImageList = new ArrayList<>();
+        successfulDownloadedImages = new HashSet<>();
         failedUrlList = new ArrayList<>();
     }
 
@@ -63,6 +66,9 @@ public class UrlAndPathHelper {
     }
 
     public List<String> getRemoteUrlList() {
+        for (String downloaded : successfulDownloadedImageList) {
+            remoteUrlList.removeIf(url -> url.contains(downloaded));
+        }
         return new ArrayList<>(remoteUrlList);
     }
 
@@ -82,8 +88,13 @@ public class UrlAndPathHelper {
         return successfulDownloadedImageList;
     }
 
-    public void addToDownloadSuccessList(String localFileLocation) {
+    public HashSet<String> getSuccessfulDownloadedImages() {
+        return successfulDownloadedImages;
+    }
+
+    public void addToDownloadSuccessList(String localFileLocation, String url) {
         successfulDownloadedImageList.add(localFileLocation.substring(localFileLocation.lastIndexOf(File.separator) + 1));
+        successfulDownloadedImages.add(url);
     }
 
     public void addToFailedUrlList(String urlStr) {

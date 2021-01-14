@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.List;
 
 public class ImageDownloader {
@@ -47,16 +48,18 @@ public class ImageDownloader {
 
     private void downloadUsingStream(String urlStr, String file) {
         File f = new File(file);
-        if (!f.exists()) {
+        if (!f.exists() || !urlAndPathHelper.getSuccessfulDownloadedImages().contains(urlStr)) {
             try {
                 downloadAndSaveStream(urlStr, file, f);
+            } catch (UnknownHostException exception) {
+                exception.printStackTrace();
             } catch (Exception e) {
                 e.printStackTrace();
                 addFailedUrlToFailedList(urlStr);
                 return;
             }
         }
-        addLocalFileLocationToList(file);
+        addLocalFileLocationToList(file, urlStr);
     }
 
     private void downloadAndSaveStream(String urlStr, String file, File f) throws IOException {
@@ -80,8 +83,8 @@ public class ImageDownloader {
         urlAndPathHelper.addToFailedUrlList(urlStr);
     }
 
-    private void addLocalFileLocationToList(String localFileLocation) {
-        urlAndPathHelper.addToDownloadSuccessList(localFileLocation);
+    private void addLocalFileLocationToList(String localFileLocation, String url) {
+        urlAndPathHelper.addToDownloadSuccessList(localFileLocation, url);
     }
 
 }

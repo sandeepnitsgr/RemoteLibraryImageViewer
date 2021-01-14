@@ -48,47 +48,28 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                 fileNames.add(new Pair<>(fileName, type));
             } else {
                 String path = fileAndUsage[0].trim();
-                String res = EntriesFinder.searchEntry(basePath + File.separator + path.substring(0, path.lastIndexOf(File.separator)), var);
-                String[] rr = res.split("\\n");
-                if (rr.length == 1) {
-                    String[] localRR = res.split(":");
-                    if (localRR.length <= 1) continue;
-                    String valStr = localRR[1].trim();
-
-                    if (valStr.contains(".png")) {
-                        String name = valStr.substring(valStr.indexOf("\"") + 1, valStr.lastIndexOf("\""));
-
-                        if (valStr.contains("ImageDensityType")) {
-                            String[] densityImage = valStr.split(",");
-                            String typeSub = densityImage[1].trim().toLowerCase();
-                            if (typeSub.contains("single")) {
-                                type = "singleDpi";
-                            } else {
-                                type = "xxhdpi";
-                            }
-                        }
-                        fileNames.add(new Pair<>(name, type));
+                String searchString = var;
+                if (searchString.contains("ImageDensityType")) {
+                    if (searchString.toLowerCase().contains("single")) {
+                        type = "singleDpi";
                     }
-                } else {
-                    for (String sst : rr) {
-                        if (sst == null || sst.isEmpty() || !sst.contains(":"))
-                            continue;
-                        String[] colSplit = sst.split(":");
-                        String us = colSplit[1].trim();
-                        if (us.contains(".png")) {
-                            String name = us.substring(us.indexOf("\"") + 1, us.lastIndexOf("\""));
-                            if (us.contains("ImageDensityType")) {
-                                String[] densityImage = us.split(",");
-                                String typeSub = densityImage[1].trim().toLowerCase();
-                                if (typeSub.contains("single")) {
-                                    type = "singleDpi";
-                                } else {
-                                    type = "xxhdpi";
-                                }
-                            }
-                            fileNames.add(new Pair<>(name, type));
-                            break;
-                        }
+                    searchString = searchString.substring(0, searchString.indexOf(","));
+                }
+                String res = EntriesFinder.searchEntry(basePath + File.separator + path.substring(0, path.lastIndexOf(File.separator)), searchString);
+                String[] rr = res.split("\\n");
+
+                for (String sst : rr) {
+                    if (sst == null || sst.isEmpty() || !sst.contains("png"))
+                        continue;
+                    String[] localRR = sst.split(":");
+                    String filePath = path.substring(path.lastIndexOf(File.separator) + 1);
+                    String currPath = localRR[0].trim();
+                    currPath = currPath.substring(currPath.lastIndexOf(File.separator) + 1);
+                    if (filePath.equals(currPath)) {
+                        String name = localRR[1].trim();
+                        name = name.substring(name.indexOf("\"") + 1, name.lastIndexOf("\""));
+                        fileNames.add(new Pair<>(name, type));
+                        break;
                     }
                 }
             }

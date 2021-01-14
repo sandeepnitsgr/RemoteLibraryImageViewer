@@ -134,9 +134,10 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         reader = new CSVReaderAndWriter(urlAndPathHelper.getBasePath(), urlAndPathHelper.getRelativeCsvFilePath());
         reader.initReader(entriesFinder.getCsvUsageModulesNameList());
         Set<Pair<String, String>> distinctFilesName = reader.getDistinctFilesName();
-        for (Pair<String, String> distinctFile : distinctFilesName) {
-            imageToDownloadSet.removeIf(imageToDownload -> imageToDownload.first.equals(distinctFile.first));
-        }
+        TreeSet<Pair<String, String>> allFiles = new TreeSet<>(Comparator.comparing(o -> o.first));
+        allFiles.addAll(distinctFilesName);
+        allFiles.addAll(imageToDownloadSet);
+        imageToDownloadSet = allFiles;
         updateDistinctFileName(distinctFilesName);
     }
 
@@ -161,12 +162,13 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         int index = tabbedPane.getSelectedIndex();
         tabbedPane.removeAll();
         updateSuccessfulDownloadList();
-        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulDownloadAllList), CriteriaTabType.ALL, this));
-        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulPreFetchedList), CriteriaTabType.PRE_FETCHED, this));
-        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulNonPreFetchedList), CriteriaTabType.NON_PRE_FETCHED, this));
+
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulDownloadAllList), CriteriaTabType.ALL, RemoteImageDownloaderView.this));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulPreFetchedList), CriteriaTabType.PRE_FETCHED, RemoteImageDownloaderView.this));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulNonPreFetchedList), CriteriaTabType.NON_PRE_FETCHED, RemoteImageDownloaderView.this));
         if (urlAndPathHelper.getFailedUrlList().size() > 0)
-            tabbedPane.addTab("Download Failed", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(downloadFailedList), CriteriaTabType.DOWNLOAD_FAILED, this));
-        tabbedPane.setSelectedIndex(index == -1 ? 0 : (index < tabbedPane.getTabCount()? index : 0));
+            tabbedPane.addTab("Download Failed", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(downloadFailedList), CriteriaTabType.DOWNLOAD_FAILED, RemoteImageDownloaderView.this));
+        tabbedPane.setSelectedIndex(index == -1 ? 0 : (index < tabbedPane.getTabCount() ? index : 0));
     }
 
     private void updateSuccessfulDownloadList() {

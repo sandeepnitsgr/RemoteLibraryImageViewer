@@ -15,6 +15,10 @@ public class AnyEntriesUsageFinder {
     private Set<Pair<String, String>> resultSet;
     private List<String> csvModulesNameList;
 
+    public AnyEntriesUsageFinder() {
+        resultSet = new TreeSet<>(Comparator.comparing(o -> o.first));
+    }
+
     public void initEntriesSearch(String basePath) {
         this.basePath = basePath;
         processAndAddToResult(searchEntries(basePath,
@@ -42,7 +46,8 @@ public class AnyEntriesUsageFinder {
     }
 
     private void processAndAddToResult(String rawSearchResult, FileNameFinder<Set<Pair<String, String>>> fileNameFinder) {
-        resultSet = fileNameFinder.findAllFileNames(basePath, rawSearchResult);
+        Set<Pair<String, String>> entries = fileNameFinder.findAllFileNames(basePath, rawSearchResult);
+        resultSet.addAll(entries);
     }
 
     public List<String> getCsvUsageModulesNameList() {
