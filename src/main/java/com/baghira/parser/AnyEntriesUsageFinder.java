@@ -1,21 +1,26 @@
 package com.baghira.parser;
 
 import com.baghira.search.filesystem.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class AnyEntriesUsageFinder {
     public static final String METHOD_LOAD_REMOTE_IMAGE_DRAWABLE = "\\.loadRemoteImageDrawable";
     public static final String TAG_REMOTE_FILE_NAME_ATTRIBUTE = "app:remoteFileName=";
-    public static final String TAG_IMAGE_DPI_TYPE = "app:imageDpiSupportType=";
     private static final String CSV_USAGE_STRING = "resources_description";
 
     private String basePath;
     private Set<Pair<String, String>> resultSet;
     private List<String> csvModulesNameList;
+    private Project project;
 
-    public AnyEntriesUsageFinder() {
+    public AnyEntriesUsageFinder(Project project) {
+        this.project = project;
         resultSet = new TreeSet<>(Comparator.comparing(o -> o.first));
     }
 
@@ -25,10 +30,9 @@ public class AnyEntriesUsageFinder {
                 METHOD_LOAD_REMOTE_IMAGE_DRAWABLE),
                 new JavaEntriesFileNameFinder());
 
-        String densityTypeResult = searchEntries(basePath, TAG_IMAGE_DPI_TYPE);
         processAndAddToResult(searchEntries(basePath,
                 TAG_REMOTE_FILE_NAME_ATTRIBUTE),
-                new XMLEntriesFileNameFinder(densityTypeResult));
+                new XMLEntriesFileNameFinder(project));
 
         processCsvModules(searchEntries(basePath, CSV_USAGE_STRING), new CSVUsageFileNameFinder());
     }

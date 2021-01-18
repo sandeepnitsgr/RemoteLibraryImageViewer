@@ -125,7 +125,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void initEntriesFinder() {
-        entriesFinder = new AnyEntriesUsageFinder();
+        entriesFinder = new AnyEntriesUsageFinder(project);
         entriesFinder.initEntriesSearch(project.getBasePath());
         imageToDownloadSet = entriesFinder.getAllImagesName();
     }
