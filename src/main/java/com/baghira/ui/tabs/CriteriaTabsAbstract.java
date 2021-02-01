@@ -4,12 +4,10 @@ package com.baghira.ui.tabs;
 import com.baghira.downloader.CsvUpdater;
 import com.baghira.ui.DownloadedImageCellRenderer;
 import com.baghira.util.TextResources;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
