@@ -122,7 +122,6 @@ public abstract class CriteriaTabsAbstract extends JPanel {
             List<String> selectedList = imageList.getSelectedValuesList();
             if (selectedList.size() > 0) {
                 int val = shouldAddToCustomerapp();
-                System.out.println(val);
                 if (val >= 0 && val != 2)
                     callBack.addToCsv(val == 0, selectedList);
             } else
@@ -131,12 +130,6 @@ public abstract class CriteriaTabsAbstract extends JPanel {
 
         private int shouldAddToCustomerapp() {
             Object[] options = new Object[]{TextResources.getCustomerapp(), TextResources.getSellerapp(), TextResources.getCancel()};
-            //            int ok = Messages.showDialog(
-//                    TextResources.getShouldAddToCustomerappString(),
-//                    TextResources.getCustomerSellerappTitle(),
-//                    TextResources.getCustomerapp(),
-//                    TextResources.getSellerapp(),
-//                    UIUtil.getQuestionIcon());
             return JOptionPane.showOptionDialog(scrollPane,
                     TextResources.getShouldAddToCustomerappString(),
                     TextResources.getCustomerSellerappTitle(),

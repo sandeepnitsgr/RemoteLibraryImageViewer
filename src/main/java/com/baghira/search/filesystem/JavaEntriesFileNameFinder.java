@@ -52,7 +52,6 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                 } else {
                     fileName = var.substring(1, var.length() - 1);
                     String existingDpi = getExistingUsageFromXml(usage, index);
-                    System.out.println("****************** " + existingDpi);
                     if (!existingDpi.isEmpty() && existingDpi.endsWith("?")) {
                         existingDpi = existingDpi.substring(0, existingDpi.length() - 1);
                     }
@@ -74,7 +73,6 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                 String[] rr = res.split("\\n");
 
                 String existingDpi = getExistingUsageFromXml(usage, index);
-                System.out.println("****************** " + existingDpi);
                 if (!existingDpi.isEmpty() && existingDpi.endsWith("?")) {
                     existingDpi = existingDpi.substring(0, existingDpi.length() - 1);
                 }

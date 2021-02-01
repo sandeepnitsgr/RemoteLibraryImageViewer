@@ -48,8 +48,6 @@ public class XMLEntriesFileNameFinder implements FileNameFinder<Set<Pair<String,
                 idAndDpiTypeMap.put(idValue, dpi);
             }
 
-            System.out.println("FileName = " + fileNameAttributeValue);
-            System.out.println("Dpi = " + dpi);
             if (fileNameAttributeValue != null && !fileNameAttributeValue.contains("webp"))
                 result.add(new Pair<>(fileNameAttributeValue, dpi));
         }
