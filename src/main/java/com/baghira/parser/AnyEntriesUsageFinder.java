@@ -1,7 +1,6 @@
 package com.baghira.parser;
 
 import com.baghira.search.filesystem.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 
 import java.util.Comparator;
@@ -11,28 +10,24 @@ import java.util.TreeSet;
 
 public class AnyEntriesUsageFinder {
     public static final String METHOD_LOAD_REMOTE_IMAGE_DRAWABLE = "\\.loadRemoteImageDrawable";
-    public static final String TAG_REMOTE_FILE_NAME_ATTRIBUTE = "app:remoteFileName=";
+    public static final String TAG_REMOTE_FILE_NAME_ATTRIBUTE = "<com.tkpd.remoteresourcerequest.view.DeferredImageView";
     private static final String CSV_USAGE_STRING = "resources_description";
 
     private String basePath;
-    private Set<Pair<String, String>> resultSet;
+    private final Set<Pair<String, String>> resultSet;
     private List<String> csvModulesNameList;
-    private Project project;
 
-    public AnyEntriesUsageFinder(Project project) {
-        this.project = project;
+    public AnyEntriesUsageFinder() {
         resultSet = new TreeSet<>(Comparator.comparing(o -> o.first));
     }
 
     public void initEntriesSearch(String basePath) {
         this.basePath = basePath;
-        processAndAddToResult(searchEntries(basePath,
-                METHOD_LOAD_REMOTE_IMAGE_DRAWABLE),
-                new JavaEntriesFileNameFinder());
+        XMLEntriesFileNameFinder xmlEntriesFinder = new XMLEntriesFileNameFinder();
+        processAndAddToResult(searchEntries(basePath), xmlEntriesFinder);
 
-        processAndAddToResult(searchEntries(basePath,
-                TAG_REMOTE_FILE_NAME_ATTRIBUTE),
-                new XMLEntriesFileNameFinder(project));
+        processAndAddToResult(searchEntries(basePath, METHOD_LOAD_REMOTE_IMAGE_DRAWABLE),
+                new JavaEntriesFileNameFinder(xmlEntriesFinder.getIdAndDpiTypeMap()));
 
         processCsvModules(searchEntries(basePath, CSV_USAGE_STRING), new CSVUsageFileNameFinder());
     }
@@ -47,6 +42,10 @@ public class AnyEntriesUsageFinder {
 
     private String searchEntries(String path, String searchString) {
         return EntriesFinder.searchEntry(path, searchString);
+    }
+
+    private String searchEntries(String path) {
+        return EntriesFinder.searchEntry(path, TAG_REMOTE_FILE_NAME_ATTRIBUTE, "-h -A 12 ");
     }
 
     private void processAndAddToResult(String rawSearchResult, FileNameFinder<Set<Pair<String, String>>> fileNameFinder) {

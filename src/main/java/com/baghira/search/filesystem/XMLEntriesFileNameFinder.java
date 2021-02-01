@@ -1,95 +1,65 @@
 package com.baghira.search.filesystem;
 
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 
-import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class XMLEntriesFileNameFinder implements FileNameFinder<Set<Pair<String, String>>> {
-    Map<String, String> dpiTypeAndFileName;
-    private final Project project;
-    private final HashSet<String> pathSet;
+    public Map<String, String> idAndDpiTypeMap;
+    private static final String REMOTE_FILE_NAME_ATTRIBUTE = "remoteFileName=";
+    private static final String DPI_TYPE_ATTRIBUTE = "imageDpiSupportType=";
+    private static final String ID_ATTRIBUTE = ":id=\"@+id/";
 
-    public XMLEntriesFileNameFinder(Project project) {
-        this.project = project;
-        dpiTypeAndFileName = new HashMap<>();
-        pathSet = new HashSet<>();
+    public XMLEntriesFileNameFinder() {
+        idAndDpiTypeMap = new HashMap<>();
     }
 
     @Override
     public Set<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
-        TreeSet<Pair<String, String>> result = new TreeSet<>(Comparator.comparing(o -> o.first));
-        String[] entries = rawString.split("\\n");
-        for (String entry : entries) {
-            if (entry == null || entry.isEmpty() || !entry.contains("=") || entry.contains("webp")) continue;
-            String[] nameParts = entry.split(".png");
-            String[] parts = entry.split(": ");
-            String path = parts[0].trim();
-            if (!pathSet.contains(path)) {
-                pathSet.add(path);
-                System.out.println("path to search = "+("file://" + project.getBasePath() + File.separator + path));
-                VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + project.getBasePath() + File.separator + path);
-                PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-                XmlFile xmlFile;
-                if (file != null) {
-                    FileViewProvider viewProvider = file.getViewProvider();
-                    xmlFile = (XmlFile) viewProvider.getPsi(XMLLanguage.INSTANCE);
-                    if (xmlFile != null) {
-                        searchAndAddDpiResult(xmlFile.getRootTag());
-                    }
-                }
+        HashSet<Pair<String, String>> result = new HashSet<>();
+        String[] separateTags = rawString.split("--");
+
+        for (String tag : separateTags) {
+            if (!tag.contains("DeferredImageView")) continue;
+            String[] individualTags = tag.split("/>");
+
+            String concernedString = individualTags[0];
+            int fileNameAttributeIndex = concernedString.indexOf(REMOTE_FILE_NAME_ATTRIBUTE);
+            int dpiTypeAttributeIndex = concernedString.indexOf(DPI_TYPE_ATTRIBUTE);
+            int idIndex = concernedString.indexOf(ID_ATTRIBUTE);
+            String fileNameAttributeValue = null;
+            String dpiTypeAttributeValue = null;
+            String idValue = null;
+            if (fileNameAttributeIndex != -1) {
+                fileNameAttributeIndex += REMOTE_FILE_NAME_ATTRIBUTE.length() + 1;
+                fileNameAttributeValue = concernedString.substring(fileNameAttributeIndex, fileNameAttributeIndex + concernedString.substring(fileNameAttributeIndex).indexOf("\""));
+            }
+            if (dpiTypeAttributeIndex != -1) {
+                dpiTypeAttributeIndex += DPI_TYPE_ATTRIBUTE.length() + 1;
+                dpiTypeAttributeValue = concernedString.substring(dpiTypeAttributeIndex, dpiTypeAttributeIndex + concernedString.substring(dpiTypeAttributeIndex).indexOf("\""));
+            }
+            String dpi = dpiTypeAttributeValue != null && dpiTypeAttributeValue.contains("single") ? "singleDpi" : "xxhdpi";
+            if (idIndex != -1) {
+                idIndex += ID_ATTRIBUTE.length();
+                idValue = concernedString.substring(idIndex, idIndex + concernedString.substring(idIndex).indexOf("\""));
+                idAndDpiTypeMap.put(idValue, dpi);
             }
 
-            String fileName = parts[0].substring(parts[0].lastIndexOf(File.separator) + 1);
-            String firstPart = nameParts[0];
-            String name = firstPart.substring(firstPart.lastIndexOf("\"") + 1) + ".png";
-            String fileType = "xxhdpi";
-            if (dpiTypeAndFileName.containsKey(fileName)) {
-                fileType = dpiTypeAndFileName.get(fileName);
-            }
-            result.add(new Pair<>(name, fileType));
+            System.out.println("FileName = " + fileNameAttributeValue);
+            System.out.println("Dpi = " + dpi);
+            if (fileNameAttributeValue != null && !fileNameAttributeValue.contains("webp"))
+                result.add(new Pair<>(fileNameAttributeValue, dpi));
         }
+
         return result;
     }
 
-    private void searchAndAddDpiResult(XmlTag rootTag) {
-        XmlTag[] tags = rootTag.getSubTags();
-        for (XmlTag tag : tags) {
-            if (tag != null) {
-                if (tag.getName().equals("com.tkpd.remoteresourcerequest.view.DeferredImageView")) {
-                    XmlAttribute[] attributes = tag.getAttributes();
-                    String type = "xxhdpi";
-                    String name = null;
-                    for (XmlAttribute attribute : attributes) {
-                        if (attribute.getName().contains("remoteFileName")) {
-                            name = attribute.getValue();
-                        } else if (attribute.getName().contains("imageDpiSupportType")) {
-                            if (attribute.getValue().toLowerCase().contains("single")) {
-                                type = "singleDpi";
-                            }
-                        }
-//                        System.out.println(attribute.getName() + " : " + attribute.getValue());
-                    }
-
-                    if (name.contains("topads")) {
-                        System.out.println("name = " + name + " : type = " + type);
-                    }
-                    dpiTypeAndFileName.put(name, type);
-                    System.out.println();
-                } else {
-                    searchAndAddDpiResult(tag);
-                }
-            }
-        }
+    public Map<String, String> getIdAndDpiTypeMap() {
+        return idAndDpiTypeMap;
     }
+
+
 }

@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,6 +31,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     private JLabel syncNow;
     private JLabel disclaimer;
     private JTabbedPane tabbedPane;
+    private JProgressBar progressBar1;
     private final Project project;
     private CSVReaderAndWriter reader;
     private AnyEntriesUsageFinder entriesFinder;
@@ -54,6 +56,15 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void setUIComponentAttributes() {
+        progressBar1.setUI(new BasicProgressBarUI() {
+            protected Color getSelectionBackground() {
+                return JBColor.ORANGE;
+            }
+
+            protected Color getSelectionForeground() {
+                return JBColor.WHITE;
+            }
+        });
         setImageListAttributes();
         setDisclaimerAttributes();
         setActionListener();
@@ -117,6 +128,8 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         initEntriesFinder();
         initCsvReaderAndUpdateDistinctFileName();
         createDownloadUrl();
+        progressBar1.setValue(0);
+        progressBar1.setVisible(true);
         startImageDownloader();
     }
 
@@ -125,7 +138,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void initEntriesFinder() {
-        entriesFinder = new AnyEntriesUsageFinder(project);
+        entriesFinder = new AnyEntriesUsageFinder();
         entriesFinder.initEntriesSearch(project.getBasePath());
         imageToDownloadSet = entriesFinder.getAllImagesName();
     }
@@ -154,7 +167,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
     }
 
     private void startImageDownloader() {
-        ImageDownloader imageDownloader = new ImageDownloader(urlAndPathHelper, this);
+        ImageDownloader imageDownloader = new ImageDownloader(urlAndPathHelper, this, progressBar1);
         imageDownloader.initDownload();
     }
 
@@ -162,12 +175,12 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         int index = tabbedPane.getSelectedIndex();
         tabbedPane.removeAll();
         updateSuccessfulDownloadList();
-
-        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulDownloadAllList), CriteriaTabType.ALL, RemoteImageDownloaderView.this));
-        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulPreFetchedList), CriteriaTabType.PRE_FETCHED, RemoteImageDownloaderView.this));
-        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulNonPreFetchedList), CriteriaTabType.NON_PRE_FETCHED, RemoteImageDownloaderView.this));
+        tabbedPane.addTab("ALL", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulDownloadAllList), CriteriaTabType.ALL, this));
+        tabbedPane.addTab("Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulPreFetchedList), CriteriaTabType.PRE_FETCHED, this));
+        tabbedPane.addTab("Non Pre-Fetched", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(successfulNonPreFetchedList), CriteriaTabType.NON_PRE_FETCHED, this));
         if (urlAndPathHelper.getFailedUrlList().size() > 0)
-            tabbedPane.addTab("Download Failed", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(downloadFailedList), CriteriaTabType.DOWNLOAD_FAILED, RemoteImageDownloaderView.this));
+            tabbedPane.addTab("Download Failed", CriteriaTabFactory.getTab(urlAndPathHelper.getLocalFilePathList(downloadFailedList), CriteriaTabType.DOWNLOAD_FAILED, this));
+
         tabbedPane.setSelectedIndex(index == -1 ? 0 : (index < tabbedPane.getTabCount() ? index : 0));
     }
 
@@ -212,7 +225,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         }
 
         reader.writeToCSV(shouldAddToCustomerapp, finalList);
-        updateList(names);
+        updateList();
     }
 
     @Override
@@ -220,13 +233,7 @@ public class RemoteImageDownloaderView extends JDialog implements DownloadListen
         NotificationsHelper.showNotification(project, message);
     }
 
-    private void updateList(List<String> imageList) {
-        updateLists(imageList);
+    private void updateList() {
         init();
-    }
-
-    private void updateLists(List<String> imageList) {
-        successfulPreFetchedList.addAll(imageList);
-        successfulNonPreFetchedList.removeAll(imageList);
     }
 }

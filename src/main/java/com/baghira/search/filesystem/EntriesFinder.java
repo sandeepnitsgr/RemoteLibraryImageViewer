@@ -9,10 +9,14 @@ public class EntriesFinder {
     public static final String OUTPUT = "OUTPUT";
 
     public static String searchEntry(String directory, String aCommand) {
+        return searchEntry(directory, aCommand, "");
+    }
+
+    public static String searchEntry(String directory, String aCommand, String commandOptions) {
         String output = "";
         try {
             Runtime rt = Runtime.getRuntime();
-            String executableCommand = BASE_COMMAND + aCommand;
+            String executableCommand = BASE_COMMAND + commandOptions + aCommand;
             Process proc = rt.exec(executableCommand, null, new File(directory));
             StreamGobbler errorGobbler = new
                     StreamGobbler(proc.getErrorStream(), ERROR);

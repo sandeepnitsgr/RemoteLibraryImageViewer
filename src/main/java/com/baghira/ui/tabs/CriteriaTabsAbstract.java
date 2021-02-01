@@ -120,20 +120,28 @@ public abstract class CriteriaTabsAbstract extends JPanel {
         @Override
         public void mouseClicked(MouseEvent e) {
             List<String> selectedList = imageList.getSelectedValuesList();
-            if (selectedList.size() > 0)
-                callBack.addToCsv(shouldAddToCustomerapp(), selectedList);
-            else
+            if (selectedList.size() > 0) {
+                int val = shouldAddToCustomerapp();
+                System.out.println(val);
+                if (val >= 0 && val != 2)
+                    callBack.addToCsv(val == 0, selectedList);
+            } else
                 callBack.showNotification("<b>Note</b><br/><b>Please select at least 1 image from non-prefetched list!</b>");
         }
 
-        private boolean shouldAddToCustomerapp() {
-            int ok = Messages.showOkCancelDialog(
+        private int shouldAddToCustomerapp() {
+            Object[] options = new Object[]{TextResources.getCustomerapp(), TextResources.getSellerapp(), TextResources.getCancel()};
+            //            int ok = Messages.showDialog(
+//                    TextResources.getShouldAddToCustomerappString(),
+//                    TextResources.getCustomerSellerappTitle(),
+//                    TextResources.getCustomerapp(),
+//                    TextResources.getSellerapp(),
+//                    UIUtil.getQuestionIcon());
+            return JOptionPane.showOptionDialog(scrollPane,
                     TextResources.getShouldAddToCustomerappString(),
                     TextResources.getCustomerSellerappTitle(),
-                    TextResources.getCustomerapp(),
-                    TextResources.getSellerapp(),
-                    UIUtil.getQuestionIcon());
-            return ok == 0;
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
         }
 
         @Override

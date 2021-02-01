@@ -16,4 +16,8 @@ public class TextResources {
     public static String getSellerapp() {
         return "Sellerapp";
     }
+
+    public static String getCancel() {
+        return "Cancel";
+    }
 }

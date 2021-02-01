@@ -92,8 +92,8 @@ public class UrlAndPathHelper {
         return successfulDownloadedImages;
     }
 
-    public void addToDownloadSuccessList(String localFileLocation, String url) {
-        successfulDownloadedImageList.add(localFileLocation.substring(localFileLocation.lastIndexOf(File.separator) + 1));
+    public void addToDownloadSuccessList(String url) {
+        successfulDownloadedImageList.add(url.substring(url.lastIndexOf(File.separator) + 1));
         successfulDownloadedImages.add(url);
     }
 

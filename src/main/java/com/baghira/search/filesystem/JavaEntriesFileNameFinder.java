@@ -4,10 +4,17 @@ import com.intellij.openapi.util.Pair;
 
 import java.io.File;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String, String>>> {
+    Map<String, String> idAndDpiTypeMap;
+
+    public JavaEntriesFileNameFinder(Map<String, String> idAndDpiTypeMap) {
+        this.idAndDpiTypeMap = idAndDpiTypeMap;
+    }
+
     @Override
     public Set<Pair<String, String>> findAllFileNames(String basePath, String rawString) {
         TreeSet<Pair<String, String>> fileNames = new TreeSet<>(Comparator.comparing(o -> o.first));
@@ -25,7 +32,7 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
             String type = "xxhdpi";
             String[] fileAndUsage = s.split(":");
             String usage = fileAndUsage[1].trim();
-            String str = "loadRemoteImageDrawable(";
+            String str = ".loadRemoteImageDrawable(";
             int index = usage.indexOf(str);
             if (index == -1) continue;
             String var = usage.substring(index + str.length());
@@ -44,6 +51,14 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                     }
                 } else {
                     fileName = var.substring(1, var.length() - 1);
+                    String existingDpi = getExistingUsageFromXml(usage, index);
+                    System.out.println("****************** " + existingDpi);
+                    if (!existingDpi.isEmpty() && existingDpi.endsWith("?")) {
+                        existingDpi = existingDpi.substring(0, existingDpi.length() - 1);
+                    }
+                    if (idAndDpiTypeMap.containsKey(existingDpi)) {
+                        type = idAndDpiTypeMap.get(existingDpi);
+                    }
                 }
                 fileNames.add(new Pair<>(fileName, type));
             } else {
@@ -58,6 +73,14 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
                 String res = EntriesFinder.searchEntry(basePath + File.separator + path.substring(0, path.lastIndexOf(File.separator)), searchString);
                 String[] rr = res.split("\\n");
 
+                String existingDpi = getExistingUsageFromXml(usage, index);
+                System.out.println("****************** " + existingDpi);
+                if (!existingDpi.isEmpty() && existingDpi.endsWith("?")) {
+                    existingDpi = existingDpi.substring(0, existingDpi.length() - 1);
+                }
+                if (idAndDpiTypeMap.containsKey(existingDpi)) {
+                    type = idAndDpiTypeMap.get(existingDpi);
+                }
                 for (String sst : rr) {
                     if (sst == null || sst.isEmpty() || !sst.contains("png"))
                         continue;
@@ -75,5 +98,16 @@ public class JavaEntriesFileNameFinder implements FileNameFinder<Set<Pair<String
             }
         }
         return fileNames;
+    }
+
+    private String getExistingUsageFromXml(String usage, int index) {
+        char[] str = usage.toCharArray();
+        int i = index - 1;
+        StringBuilder sb = new StringBuilder();
+        while (i >= 0 && (str[i] == '_' || str[i] == '?' || ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z')))) {
+            sb.append(str[i]);
+            i--;
+        }
+        return sb.reverse().toString();
     }
 }
